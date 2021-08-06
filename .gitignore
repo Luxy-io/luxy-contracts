@@ -22,7 +22,8 @@ ENV/
 .env.*.local
 cache/
 artifacts/
-
+secrets.json
+secrets_copy.json
 # Logs
 logs
 *.log

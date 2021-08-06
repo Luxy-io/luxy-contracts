@@ -29,8 +29,9 @@
  require('@nomiclabs/hardhat-ethers');
  require("@nomiclabs/hardhat-truffle5");
  require('@openzeppelin/hardhat-upgrades');
+ require("@nomiclabs/hardhat-etherscan");
 
- const { alchemyApiKey, mnemonic } = require('./secrets.json');
+ const { alchemyApiKey, mnemonic, apiKey ,apiKeyPolygon } = require('./secrets.json');
 
 module.exports = {
   networks: {
@@ -38,6 +39,14 @@ module.exports = {
            url: `https://eth-rinkeby.alchemyapi.io/v2/${alchemyApiKey}`,
            accounts: { mnemonic: mnemonic },
          },
+         mumbai : {
+           url: `https://polygon-mumbai.g.alchemy.com/v2/q4ZVIGwwKYmIdt30HZ9NHNV0YdXBCYo6`,
+            accounts : {mnemonic: mnemonic}
+        }
        },
   solidity: "0.8.4",
+  etherscan: {
+    apiKey: apiKeyPolygon,
+  },
+
 };
