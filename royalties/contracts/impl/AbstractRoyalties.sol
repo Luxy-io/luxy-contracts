@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 import "../LibPart.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-abstract contract AbstractRoyalties {
+abstract contract AbstractRoyalties is ERC165Upgradeable {
     mapping (uint256 => LibPart.Part[]) public royalties;
 
     function _saveRoyalties(uint256 _id, LibPart.Part[] memory _royalties) internal {

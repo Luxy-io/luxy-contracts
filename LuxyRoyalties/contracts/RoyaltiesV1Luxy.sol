@@ -18,7 +18,11 @@ abstract contract RoyaltiesV2Impl is Initializable {
     );
     mapping(uint256 => Royalties[]) internal royalties;
 
-    function __RoyaltiesV2Impl_init_unchained() internal initializer {}
+    function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
+
+    function __RoyaltiesV1Luxy_init() public initializer {
+        __RoyaltiesV1Luxy_init_unchained();
+    }
 
     function getRoyalties(uint256 id)
         external
@@ -31,6 +35,7 @@ abstract contract RoyaltiesV2Impl is Initializable {
     function _setRoyalties(uint256 _id, Royalties[] memory _royalties)
         internal
     {
+        require(royalties[_id].length == 0, "Royalties already set");
         for (uint256 i = 0; i < _royalties.length; i++) {
             require(
                 _royalties[i].account != address(0x0),
