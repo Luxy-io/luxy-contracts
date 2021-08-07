@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "../RoyaltiesV2Impl.sol";
+import "../RoyaltiesV1Luxy.sol";
 
-contract ERC721Luxy is ERC721URIStorageUpgradeable, RoyaltiesV2Impl {
+contract ERC721Luxy is ERC721URIStorageUpgradeable, RoyaltiesV1Luxy {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
 
@@ -18,7 +18,7 @@ contract ERC721Luxy is ERC721URIStorageUpgradeable, RoyaltiesV2Impl {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC721_init_unchained(name_, symbol_);
-        __RoyaltiesV2Impl_init_unchained();
+        __RoyaltiesV1Luxy_init_unchained();
         __ERC721Luxy_init_unchained();
     }
 
@@ -47,7 +47,7 @@ contract ERC721Luxy is ERC721URIStorageUpgradeable, RoyaltiesV2Impl {
         returns (bool)
     {
         return
-            _interfaceId == type(RoyaltiesV2Impl).interfaceId ||
+            _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
             _interfaceId == type(ERC721URIStorageUpgradeable).interfaceId ||
             super.supportsInterface(_interfaceId);
     }
