@@ -18,5 +18,8 @@
     "ethers": "^5.4.1",
     "hardhat": "^2.4.3",
     "web3": "^1.4.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^4.2.0"
   }
 }
