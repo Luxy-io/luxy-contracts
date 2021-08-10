@@ -6,7 +6,7 @@ const main = async () => {
     // Get contract factory
     const ERC721Luxy = await ethers.getContractFactory('ERC721Luxy');
     // Deploy contract proxy
-    const ProxyCampaignFactory = await upgrades.deployProxy(ERC721Luxy, ["ERC721Luxy", "LUXY"], { initializer: '__ERC721Luxy_init' });
+    const ProxyCampaignFactory = await upgrades.deployProxy(ERC721Luxy, ["ERC721Luxy", "LUXY", "ipfs:/"], { initializer: '__ERC721Luxy_init' });
     console.log('Deploying contract');
     // Wait for campaign factory deploy success
     await ProxyCampaignFactory.deployed();
