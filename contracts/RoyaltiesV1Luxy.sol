@@ -60,7 +60,7 @@ abstract contract RoyaltiesV1Luxy is Initializable {
 
     function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
 
-    function __RoyaltiesV1Luxy_init() internal initializer {
+    function __RoyaltiesV1Luxy_init() public initializer {
         __RoyaltiesV1Luxy_init_unchained();
     }
 
