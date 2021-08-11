@@ -31,15 +31,10 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: 'rinkeby',
+  defaultNetwork: 'localhost',
   networks: {
     localhost: {
       url: 'http://127.0.0.1:8545',
-    },
-    hardhat: {
-      forking: {
-        url: process.env.FORKING_ENDPOINT,
-      }
     },
     goerli: {
       url:
@@ -49,6 +44,13 @@ module.exports = {
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
+      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      gasPrice: 80000000000,
+      blockGasLimit: 22450000,
+    },
+    mumbai: {
+      url:
+        process.env.MUMBAI_ENDPOINT,
       accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
       gasPrice: 80000000000,
       blockGasLimit: 22450000,
@@ -76,6 +78,6 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY,
+    apiKey: process.env.POLYGONSCAN_KEY,
   },
 };

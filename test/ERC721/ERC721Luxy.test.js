@@ -27,7 +27,7 @@ describe('ERC721Luxy', function () {
         );
         const _luxy = await upgrades.deployProxy(
             Luxy,
-            ["ERC721Luxy", "LUXY"],
+            ["ERC721Luxy", "LUXY", 'ipfs:/'],
             { initializer: '__ERC721Luxy_init' }
         );
         await _luxy.deployed();
@@ -36,8 +36,8 @@ describe('ERC721Luxy', function () {
 
     context('with minted tokens', function () {
         beforeEach(async function () {
-            await luxy.MintNFT(owner, { "name": "Claudio" }, [{ account: owner, value: 10 }]);
-            await luxy.MintNFT(owner, { "name": "Claudio" }, [{ account: owner, value: 10 }]);
+            await luxy.mint(owner, "Claudio", [{ account: owner, value: 10 }]);
+            await luxy.mint(owner, "Claudio", [{ account: owner, value: 10 }]);
         });
 
         describe('balanceOf', function () {
@@ -57,7 +57,7 @@ describe('ERC721Luxy', function () {
                 it('throws', async function () {
                     await expectRevert(
                         luxy.balanceOf(ZERO_ADDRESS), 'ERC721: balance query for the zero address',
-                    );
+                    ); 
                 });
             });
         });
