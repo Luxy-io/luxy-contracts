@@ -1,4 +1,3 @@
-
 require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
@@ -24,7 +23,7 @@ task('accounts', 'Prints the list of accounts', async () => {
  */
 module.exports = {
   solidity: {
-    version: '0.7.1',
+    version: '0.8.4',
     settings: {
       optimizer: {
         enabled: true,
@@ -37,13 +36,40 @@ module.exports = {
     localhost: {
       url: 'http://127.0.0.1:8545',
     },
+    goerli: {
+      url:
+        process.env.GOERLI_ENDPOINT,
+      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+    },
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
       accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      gasPrice: 80000000000,
+      blockGasLimit: 22450000,
     },
     mumbai: {
-      url: "https://rpc-mumbai.maticvigil.com",
+      url:
+        process.env.MUMBAI_ENDPOINT,
+      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      gasPrice: 80000000000,
+      blockGasLimit: 22450000,
+    },
+    kovan: {
+      url:
+        process.env.KOVAN_ENDPOINT,
+      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+    },
+    bsc_testnet: {
+      url: process.env.BSC_TESTNET_ENDPOINT,
+      chainId: 97,
+      gasPrice: 20000000000,
+      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+    },
+    bsc_mainnet: {
+      url: process.env.BSC_ENDPOINT,
+      chainId: 56,
+      gasPrice: 20000000000,
       accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
     },
     mainnet: {
@@ -52,6 +78,6 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY,
+    apiKey: process.env.POLYGONSCAN_KEY,
   },
 };
