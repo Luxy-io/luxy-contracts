@@ -122,6 +122,20 @@ contract ERC1155Luxy is
         _tokenIds.increment();
     }
 
+    function transferFrom(
+        uint256 id,
+        address from,
+        address to,
+        uint256 amount
+    )   public  {
+        uint balance = balanceOf(from, id);
+        if (balance != 0) {
+            require(balance >= amount, "Insufficient balance");
+            super.safeTransferFrom(from, to, id, amount, "");
+        }
+
+    }
+
     function updateAccount(
         uint256 _id,
         address _from,

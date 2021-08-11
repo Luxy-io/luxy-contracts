@@ -67,6 +67,15 @@ describe('ERC1155Luxy', function () {
                 })
             })
 
+            context('TransferFrom ERC1155', function() {
+                it('transfering to new account', async function () {
+                    await luxy.transferFrom(0, owner,newOwner, 3);
+                    expect(await luxy.balanceOf(owner,0)).to.be.equal(7);
+                    expect(await luxy.balanceOf(newOwner,0)).to.be.equal(3);
+    
+                })
+            })
+
 
 
             context('when querying the zero address', function () {
