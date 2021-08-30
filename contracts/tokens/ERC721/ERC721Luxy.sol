@@ -45,12 +45,14 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
+import "../ERC1271/ERC1271.sol";
 
 contract ERC721Luxy is
     ERC721URIStorageUpgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
-    RoyaltiesV1Luxy
+    RoyaltiesV1Luxy,
+    ERC1271Upgradeable
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
@@ -73,6 +75,8 @@ contract ERC721Luxy is
         __ERC721Luxy_init_unchained();
         __ERC721Enumerable_init_unchained();
         _setBaseURI(baseURI_);
+        __EIP712_init_unchained('Luxy721','1');
+        __ERC1271Upgradeable_init_unchained();
     }
 
     function __ERC721Luxy_init_unchained() internal initializer {}

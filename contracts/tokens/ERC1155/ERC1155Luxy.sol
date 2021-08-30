@@ -45,12 +45,14 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155Burn
 import "./ERC1155BaseUri.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
+import "../ERC1271/ERC1271.sol";
 
 contract ERC1155Luxy is
     OwnableUpgradeable,
     ERC1155BurnableUpgradeable,
     ERC1155BaseURI,
-    RoyaltiesV1Luxy
+    RoyaltiesV1Luxy,
+    ERC1271Upgradeable
 {
     string public name;
     string public symbol;
@@ -58,6 +60,9 @@ contract ERC1155Luxy is
     event DefaultApproval(address indexed operator, bool hasApproval);
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
+    bytes32 public constant TRANSFER_TYPEHASH = keccak256("Luxy1155(uint256 tokenId,string tokenURI)");
+
+
 
     function __ERC1155Luxy_init(
         string memory _name,
@@ -72,6 +77,8 @@ contract ERC1155Luxy is
         __ERC165_init_unchained();
         __RoyaltiesV1Luxy_init_unchained();
         _setBaseURI(_baseURI);
+        __EIP712_init_unchained('Luxy1155','1');
+        __ERC1271Upgradeable_init_unchained();
     }
     function __ERC1155Luxy_init_unchained() internal initializer {
     }
@@ -159,6 +166,27 @@ contract ERC1155Luxy is
             _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
             _interfaceId == type(OwnableUpgradeable).interfaceId ||
             super.supportsInterface(_interfaceId);
+    }
+
+    function validate(address account, bytes32 hash, bytes memory signature) external view {
+        validate1271(account, hash, signature);
+    }
+
+    function hash1155(address account,uint256 tokenId, uint256 amount) external view returns (bytes32){
+        require(amount > 0, "amount incorrect");
+        uint256 ownerAmount = balanceOf(account, tokenId);
+        string memory tokenURI = uri(tokenId);
+        require(ownerAmount >= amount, "Insufficient balance");
+        // Royalties[] memory royalties = getRoyalties(tokenId);
+        // bytes32[] memory royaltiesBytes = new bytes32[](royalties.length);
+        // for (uint i = 0; i < royalties.length; i++) {
+        //     royaltiesBytes[i] = _royaltiesHash(royalties[i]);
+        // }
+        return keccak256(abi.encode(
+            TRANSFER_TYPEHASH,
+            tokenId,
+            keccak256(abi.encode(bytes(tokenURI)))
+             ));
     }
 
     uint256[100] private __gap;

@@ -40,87 +40,72 @@
 
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "hardhat/console.sol";
 
-abstract contract RoyaltiesV1Luxy is Initializable {
-    struct Royalties {
-        address payable account;
-        uint96 value;
+
+abstract contract ERC1271Upgradeable is EIP712Upgradeable{
+    using ECDSAUpgradeable for bytes32;
+
+    bytes4 public constant ERC1271_INTERFACE_ID = 0xfb855dc9; // this.isValidSignature.selector
+
+    bytes4 public constant ERC1271_RETURN_VALID_SIGNATURE = 0x1626ba7e;
+    bytes4 public constant ERC1271_RETURN_INVALID_SIGNATURE = 0x00000000;
+    string constant CONTRACT_SIGNATURE_ERROR = "contract signature verification error";
+    string constant SIGNATURE_ERROR = "signature verification error";
+    
+      function __ERC1271Upgradeable_init(string memory name, string memory version) internal initializer {
+        __EIP712_init_unchained(name,version);
+        __ERC1271Upgradeable_init_unchained();
     }
-    bytes32 public constant TYPE_HASH = keccak256("Royalties(address account,uint96 value)");
-
-
-    event RoyaltiesSet(uint256 tokenId, Royalties[] royalties);
-    event RoyaltieAccountUpdate(
-        uint256 tokenId,
-        uint256 index,
-        address previousAccount,
-        address newAccount
-    );
-    mapping(uint256 => Royalties[]) internal royalties;
-
-    function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
-
-    function __RoyaltiesV1Luxy_init() public initializer {
-        __RoyaltiesV1Luxy_init_unchained();
+    function __ERC1271Upgradeable_init_unchained() internal initializer {
     }
 
-    function getRoyalties(uint256 id)
-        public
-        view
-        returns (Royalties[] memory)
-    {
-        return royalties[id];
+
+    function isContract(address addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+        return size > 0;
     }
 
-    function _setRoyalties(uint256 _id, Royalties[] memory _royalties)
+
+    function returnIsValidSignatureMagicNumber(bool isValid)
         internal
+        pure
+        returns (bytes4)
     {
-        require(royalties[_id].length == 0, "Royalties already set");
-        for (uint256 i = 0; i < _royalties.length; i++) {
-            require(
-                _royalties[i].account != address(0x0),
-                "Recipient should be present"
-            );
-            require(
-                _royalties[i].value != 0,
-                "Royalty value should be positive"
-            );
-            royalties[_id].push(_royalties[i]);
-        }
-        emit RoyaltiesSet(_id, _royalties);
+        return
+            isValid
+                ? ERC1271_RETURN_VALID_SIGNATURE
+                : ERC1271_RETURN_INVALID_SIGNATURE;
     }
 
-    function _updateAccount(
-        uint256 _id,
-        address _from,
-        address _to
-    ) internal {
-        uint256 length = royalties[_id].length;
-        address previousAccount = address(0x0);
-        uint256 index = 0;
-        for (uint256 i = 0; i < length; i++) {
-            if (royalties[_id][i].account == _from) {
-                previousAccount = royalties[_id][i].account;
-                index = i;
-                royalties[_id][i].account = payable(address(uint160(_to)));
-            }
+    function validate1271(
+        address signer,
+        bytes32 structHash,
+        bytes memory signature
+    ) internal view {
+        bytes32 hash = _hashTypedDataV4(structHash);
+        if (isContract(signer)) {
+            require(
+                IERC1271Upgradeable(signer).isValidSignature(hash, signature) ==
+                    ERC1271_RETURN_VALID_SIGNATURE,
+                CONTRACT_SIGNATURE_ERROR
+            );
+        } else {
+            console.log(hash.recover(signature));
+            console.log(signer);
+            require(
+                ECDSAUpgradeable.recover(hash, signature) == signer,
+                SIGNATURE_ERROR
+            );
         }
-        require(
-            previousAccount != address(0x0),
-            "Account not found, are you using the correct wallet?"
-        );
-        emit RoyaltieAccountUpdate(
-            _id,
-            index,
-            previousAccount,
-            royalties[_id][index].account
-        );
     }
 
-    function _royaltiesHash(Royalties memory _royalties) internal pure returns (bytes32){
-        return keccak256(abi.encode(TYPE_HASH, _royalties.account, _royalties.value));
-    }
     uint256[50] private __gap;
 }

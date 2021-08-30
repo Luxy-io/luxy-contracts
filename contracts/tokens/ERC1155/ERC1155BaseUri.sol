@@ -77,16 +77,16 @@ abstract contract ERC1155BaseURI is ERC1155Upgradeable {
         virtual
         returns (string memory)
     {
-        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory tokenURI = _tokenURIs[tokenId];
         string memory base = baseURI();
 
         // If there is no base URI, return the token URI.
         if (bytes(base).length == 0) {
-            return _tokenURI;
+            return tokenURI;
         }
         // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        if (bytes(_tokenURI).length > 0) {
-            return string(abi.encodePacked(base, _tokenURI));
+        if (bytes(tokenURI).length > 0) {
+            return string(abi.encodePacked(base, tokenURI));
         }
         // If there is a baseURI but no tokenURI, concatenate the tokenID to the baseURI.
         return string(abi.encodePacked(base, tokenId.toString()));
