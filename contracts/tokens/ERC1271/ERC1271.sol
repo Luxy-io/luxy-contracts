@@ -101,7 +101,7 @@ abstract contract ERC1271Upgradeable is EIP712Upgradeable{
             console.log(hash.recover(signature));
             console.log(signer);
             require(
-                ECDSAUpgradeable.recover(hash, signature) == signer,
+                hash.recover(signature) == signer,
                 SIGNATURE_ERROR
             );
         }
