@@ -4,13 +4,11 @@ const { ethers } = require("hardhat");
 describe("Tests For Luxy Royalties", function () {
   let royalties;
   let contractAddress; 
-  let selector;
   let accounts;
   let creator1;
   let creator2;
   let creator3;
   let newCreator1;
-  let newCreator2;
   var supply = ethers.utils.parseEther('100');
 
   beforeEach(async () => {

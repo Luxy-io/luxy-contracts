@@ -51,8 +51,7 @@ contract ERC721Luxy is
     ERC721URIStorageUpgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
-    RoyaltiesV1Luxy,
-    ERC1271Upgradeable
+    RoyaltiesV1Luxy
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
@@ -75,8 +74,6 @@ contract ERC721Luxy is
         __ERC721Luxy_init_unchained();
         __ERC721Enumerable_init_unchained();
         _setBaseURI(baseURI_);
-        __EIP712_init_unchained('Luxy721','1');
-        __ERC1271Upgradeable_init_unchained();
     }
 
     function __ERC721Luxy_init_unchained() internal initializer {}

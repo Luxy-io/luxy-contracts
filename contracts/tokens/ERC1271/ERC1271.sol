@@ -85,7 +85,7 @@ abstract contract ERC1271Upgradeable is EIP712Upgradeable{
                 : ERC1271_RETURN_INVALID_SIGNATURE;
     }
 
-    function validate1271(
+    function _validate(
         address signer,
         bytes32 structHash,
         bytes memory signature
@@ -98,8 +98,6 @@ abstract contract ERC1271Upgradeable is EIP712Upgradeable{
                 CONTRACT_SIGNATURE_ERROR
             );
         } else {
-            console.log(hash.recover(signature));
-            console.log(signer);
             require(
                 hash.recover(signature) == signer,
                 SIGNATURE_ERROR
