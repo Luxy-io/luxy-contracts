@@ -111,53 +111,53 @@ describe ('LuxyTransferManager:doTransferTest()', function(){
         //     return { left, right }
         // }
 
-        it("Transfer from ERC721 to ERC1155, (buyerFee2.0%, sallerFee2.0% = 5%) of ERC1155 transfer to community, orders dataType == V1", async () => {
-			const { left, right } = await prepare721_1155Orders(110)
+        // it("Transfer from ERC721 to ERC1155, (buyerFee2.0%, sallerFee2.0% = 5%) of ERC1155 transfer to community, orders dataType == V1", async () => {
+		// 	const { left, right } = await prepare721_1155Orders(110)
 
-			await testing.checkDoTransfers(left.makeAsset.assetType, left.takeAsset.assetType, [1, 100], left, right);
+		// 	await testing.checkDoTransfers(left.makeAsset.assetType, left.takeAsset.assetType, [1, 100], left, right);
 
-            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
-			expect(await erc721Token.balanceOf(account2.address)).to.equal(1);
-			expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId1)).to.equal(94);
-            expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId1)).to.equal(2);
-            expect(await erc1155Token.balanceOf(accounts[3], erc1155TokenId1)).to.equal(1);
-            expect(await erc1155Token.balanceOf(accounts[5], erc1155TokenId1)).to.equal(3);
-            expect(await erc1155Token.balanceOf(accounts[4], erc1155TokenId1)).to.equal(2);
-            expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(4);
-            expect(await erc1155Token.balanceOf(community, erc1155TokenId1)).to.equal(4);
-		})
+        //     expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+		// 	expect(await erc721Token.balanceOf(account2.address)).to.equal(1);
+		// 	expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId1)).to.equal(94);
+        //     expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId1)).to.equal(2);
+        //     expect(await erc1155Token.balanceOf(accounts[3], erc1155TokenId1)).to.equal(1);
+        //     expect(await erc1155Token.balanceOf(accounts[5], erc1155TokenId1)).to.equal(3);
+        //     expect(await erc1155Token.balanceOf(accounts[4], erc1155TokenId1)).to.equal(2);
+        //     expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(4);
+        //     expect(await erc1155Token.balanceOf(community, erc1155TokenId1)).to.equal(4);
+		// })
 
-        async function prepare721_1155Orders(t2Amount = 105) {
-            await erc721Token.mint(account1.address, erc721TokenId1);
-            await erc1155Token.mint(account2.address, erc1155TokenId1, t2Amount);
-            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
-            await erc1155Token.connect(account2).setApprovalForAll(transferProxy.address, true);
-            /*in this: accounts[3] - address originLeftOrder, 100 - originLeftOrderFee(bp%)*/
-            let addrOriginLeft = [[accounts[3], 100], [accounts[5], 300]];
-            let addrOriginRight = [[accounts[4], 200], [accounts[6], 400]];
-            let encDataLeft = await encDataV1([ [[accounts[1], 10000]], addrOriginLeft]);
-            let encDataRight = await encDataV1([ [[accounts[2], 10000]], addrOriginRight]);
-            const left = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId1), 100), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
-            const right = Order(account2.address, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId1), 100), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, ORDER_DATA_V1, encDataRight);
-            return { left, right }
-        }
-        it("Transfer from ERC1155 to ERC1155: 2 to 10, 50% 50% for payouts", async () => {
-			const { left, right } = await prepare1155_1155Orders();
+        // async function prepare721_1155Orders(t2Amount = 105) {
+        //     await erc721Token.mint(account1.address, erc721TokenId1);
+        //     await erc1155Token.mint(account2.address, erc1155TokenId1, t2Amount);
+        //     await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+        //     await erc1155Token.connect(account2).setApprovalForAll(transferProxy.address, true);
+        //     /*in this: accounts[3] - address originLeftOrder, 100 - originLeftOrderFee(bp%)*/
+        //     let addrOriginLeft = [[accounts[3], 100], [accounts[5], 300]];
+        //     let addrOriginRight = [[accounts[4], 200], [accounts[6], 400]];
+        //     let encDataLeft = await encDataV1([ [[accounts[1], 10000]], addrOriginLeft]);
+        //     let encDataRight = await encDataV1([ [[accounts[2], 10000]], addrOriginRight]);
+        //     const left = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId1), 100), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+        //     const right = Order(account2.address, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId1), 100), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+        //     return { left, right }
+        // }
+        // it("Transfer from ERC1155 to ERC1155: 2 to 10, 50% 50% for payouts", async () => {
+		// 	const { left, right } = await prepare1155_1155Orders();
 
-			await testing.checkDoTransfers(left.makeAsset.assetType, left.takeAsset.assetType, [2, 10], left, right);
+		// 	await testing.checkDoTransfers(left.makeAsset.assetType, left.takeAsset.assetType, [2, 10], left, right);
 
-            expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId1)).to.equal(98);
-            expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId1)).to.equal(0);
-            expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId2)).to.equal(0);
-            expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId2)).to.equal(90);
-            expect(await erc1155Token.balanceOf(accounts[3], erc1155TokenId2)).to.equal(5);
-            expect(await erc1155Token.balanceOf(accounts[5], erc1155TokenId2)).to.equal(5);
-            expect(await erc1155Token.balanceOf(accounts[4], erc1155TokenId1)).to.equal(1);
-            expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(1);
-            expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(1);
-            expect(await erc1155Token.balanceOf(community, erc1155TokenId1)).to.equal(0);
-            expect(await erc1155Token.balanceOf(community, erc1155TokenId2)).to.equal(0);
-		});
+        //     expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId1)).to.equal(98);
+        //     expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId1)).to.equal(0);
+        //     expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId2)).to.equal(0);
+        //     expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId2)).to.equal(90);
+        //     expect(await erc1155Token.balanceOf(accounts[3], erc1155TokenId2)).to.equal(5);
+        //     expect(await erc1155Token.balanceOf(accounts[5], erc1155TokenId2)).to.equal(5);
+        //     expect(await erc1155Token.balanceOf(accounts[4], erc1155TokenId1)).to.equal(1);
+        //     expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(1);
+        //     expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(1);
+        //     expect(await erc1155Token.balanceOf(community, erc1155TokenId1)).to.equal(0);
+        //     expect(await erc1155Token.balanceOf(community, erc1155TokenId2)).to.equal(0);
+		// });
         async function prepare1155_1155Orders() {
 			await erc1155Token.mint(account1.address, erc1155TokenId1, 100);
 			await erc1155Token.mint(account2.address, erc1155TokenId2, 100);
@@ -169,6 +169,22 @@ describe ('LuxyTransferManager:doTransferTest()', function(){
 			const right = Order(account2.address, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId2), 10), ZERO_ADDRESS, Asset(ERC1155, enc(erc1155Token.address, erc1155TokenId1), 2), 1, 0, 0, ORDER_DATA_V1, encDataRight);
 			return { left, right }
 		}
+        it("rounding error Transfer from ERC1155 to ERC1155: 1 to 5, 50% 50% for payouts", async () => {
+			const { left, right } = await prepare1155_1155Orders();
+
+			await testing.checkDoTransfers(left.makeAsset.assetType, left.takeAsset.assetType, [1, 5], left, right);
+            expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId1)).to.equal(99);
+            expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId1)).to.equal(0);
+            expect(await erc1155Token.balanceOf(account1.address, erc1155TokenId2)).to.equal(0);
+            expect(await erc1155Token.balanceOf(account2.address, erc1155TokenId2)).to.equal(95);
+
+            expect(await erc1155Token.balanceOf(accounts[3], erc1155TokenId2)).to.equal(2);
+            expect(await erc1155Token.balanceOf(accounts[5], erc1155TokenId2)).to.equal(3);
+            expect(await erc1155Token.balanceOf(accounts[4], erc1155TokenId1)).to.equal(0);
+            expect(await erc1155Token.balanceOf(accounts[6], erc1155TokenId1)).to.equal(1);
+            expect(await erc1155Token.balanceOf(community, erc1155TokenId1)).to.equal(0);
+            
+		});
 
 
 
