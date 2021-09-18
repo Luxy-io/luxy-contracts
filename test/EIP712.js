@@ -1,27 +1,24 @@
-const DOMAIN_TYPE = [
-  {
-    type: "string",
-    name: "name"
-  },
-	{
-		type: "string",
-		name: "version"
-	},
-  {
-    type: "uint256",
-    name: "chainId"
-  },
-  {
-    type: "address",
-    name: "verifyingContract"
-  }
+const ethSigUtil = require('eth-sig-util');
+const EIP712Domain = [
+  { name: 'name', type: 'string' },
+  { name: 'version', type: 'string' },
+  { name: 'chainId', type: 'uint256' },
+  { name: 'verifyingContract', type: 'address' },
 ];
+async function domainSeparator (name, version, chainId, verifyingContract) {
+  return '0x' + ethSigUtil.TypedDataUtils.hashStruct(
+    'EIP712Domain',
+    { name, version, chainId, verifyingContract },
+    { EIP712Domain },
+  ).toString('hex');
+}
+
 
 module.exports = {
   createTypeData: function (domainData, primaryType, message, types) {
     return {
       types: Object.assign({
-        EIP712Domain: DOMAIN_TYPE,
+        EIP712Domain: EIP712Domain,
       }, types),
       domain: domainData,
       primaryType: primaryType,
@@ -53,6 +50,7 @@ module.exports = {
       }
       if (web3.currentProvider.isMetaMask) {
         web3.currentProvider.sendAsync({
+          jsonrpc: "2.0",
           method: "eth_signTypedData_v4",
           params: [from, JSON.stringify(data)],
           id: new Date().getTime()
@@ -61,11 +59,13 @@ module.exports = {
         let send = web3.currentProvider.sendAsync;
         if (!send) send = web3.currentProvider.send;
         send.bind(web3.currentProvider)({
+          jsonrpc: "2.0",
           method: "eth_signTypedData_v4",
           params: [from, data],
           id: new Date().getTime()
         }, cb);
       }
     });
-  }
+  },
+  domainSeparator
 };

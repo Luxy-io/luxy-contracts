@@ -80,6 +80,6 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_KEY,
+    apiKey: process.env.ETHERSCAN_KEY,
   },
 };

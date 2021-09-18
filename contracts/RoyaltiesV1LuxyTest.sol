@@ -41,9 +41,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./RoyaltiesV1Luxy.sol";
-
+import "./LibPart.sol";
 contract RoyaltiesV1LuxyTest is RoyaltiesV1Luxy {
-    function setRoyalties(uint256 _id, Royalties[] memory _royalties) external {
+    function setRoyalties(uint256 _id, LibPart.Part[] memory _royalties) external {
         _setRoyalties(_id, _royalties);
     }
 

@@ -44,7 +44,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
-import "hardhat/console.sol";
 
 
 abstract contract ERC1271Upgradeable is EIP712Upgradeable{

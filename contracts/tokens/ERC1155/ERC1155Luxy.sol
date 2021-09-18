@@ -114,7 +114,7 @@ contract ERC1155Luxy is
     function mint(
         address account,
         uint256 amount,
-        Royalties[] memory royalties,
+        LibPart.Part[] memory royalties,
         string memory tokenURI
     ) public {
         uint256 id = _tokenIds.current();

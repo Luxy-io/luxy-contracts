@@ -41,24 +41,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "hardhat/console.sol";
+import "./LibPart.sol";
 
 abstract contract RoyaltiesV1Luxy is Initializable {
-    struct Royalties {
-        address payable account;
-        uint96 value;
-    }
-    bytes32 public constant TYPE_HASH = keccak256("Royalties(address account,uint96 value)");
 
-
-    event RoyaltiesSet(uint256 tokenId, Royalties[] royalties);
+    event RoyaltiesSet(uint256 tokenId, LibPart.Part[] royalties);
     event RoyaltieAccountUpdate(
         uint256 tokenId,
         uint256 index,
         address previousAccount,
         address newAccount
     );
-    mapping(uint256 => Royalties[]) internal royalties;
+    mapping(uint256 => LibPart.Part[]) internal royalties;
 
     function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
 
@@ -69,12 +63,12 @@ abstract contract RoyaltiesV1Luxy is Initializable {
     function getRoyalties(uint256 id)
         public
         view
-        returns (Royalties[] memory)
+        returns (LibPart.Part[] memory)
     {
         return royalties[id];
     }
 
-    function _setRoyalties(uint256 _id, Royalties[] memory _royalties)
+    function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
         internal
     {
         require(royalties[_id].length == 0, "Royalties already set");
@@ -119,8 +113,5 @@ abstract contract RoyaltiesV1Luxy is Initializable {
         );
     }
 
-    function _royaltiesHash(Royalties memory _royalties) internal pure returns (bytes32){
-        return keccak256(abi.encode(TYPE_HASH, _royalties.account, _royalties.value));
-    }
     uint256[50] private __gap;
 }

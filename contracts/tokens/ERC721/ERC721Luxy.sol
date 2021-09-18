@@ -81,7 +81,7 @@ contract ERC721Luxy is
     function mint(
         address payable _recipient,
         string memory _metadata,
-        Royalties[] memory _royalties
+        LibPart.Part[] memory _royalties
     ) external returns (uint256) {
         uint256 itemId = _tokenIds.current();
         _safeMint(_recipient, itemId);

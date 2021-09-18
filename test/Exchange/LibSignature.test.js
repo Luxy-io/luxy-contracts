@@ -14,10 +14,6 @@ describe ('LibSignature', function(){
             const msg = "myMessage";
             const hash = await lib.getKeccak(msg)
             const signature = await signPersonalMessage(hash, accounts[1]);
-            console.log('checking signature')
-            console.log(signature)
-            console.log("checking signature length")
-            console.log(signature.v);
             const sig2 = signature.r + signature.s.substr(2) + (signature.v + 4).toString(16)
     
             const signer = await lib.recoverFromSigTest(hash, sig2);

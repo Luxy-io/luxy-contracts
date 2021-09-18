@@ -34,15 +34,21 @@ const Types = {
 	]
 };
 
-async function sign(order, account, verifyingContract) {
+async function sign(name,version,order, account, verifyingContract) {
 	const chainId = Number(await web3.eth.getChainId());
 	const data = EIP712.createTypeData({
-		name: "Exchange",
-		version: "2",
-		chainId,
-		verifyingContract
+		name: name,
+		version: version,
+		chainId: chainId,
+		verifyingContract: verifyingContract
 	}, 'Order', order, Types);
 	return (await EIP712.signTypedData(web3, account, data)).sig;
 }
 
-module.exports = { AssetType, Asset, Order, sign }
+async function domainSeparator(name,version,verifyingContract){
+    const chainId = Number(await web3.eth.getChainId());
+    const data = EIP712.domainSeparator(name, version, chainId, verifyingContract);
+    return data;
+}
+
+module.exports = { AssetType, Asset, Order, sign, domainSeparator }
