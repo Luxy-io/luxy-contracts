@@ -5,7 +5,7 @@ function id(str) {
 }
 
 function enc(token, tokenId) {
-	if (tokenId) {
+	if (tokenId > -1) {
 		return web3.eth.abi.encodeParameters(["address", "uint256"], [token, tokenId]);
 	} else {
 		return web3.eth.abi.encodeParameter("address", token);

@@ -62,6 +62,7 @@ abstract contract RoyaltiesV1Luxy is Initializable {
 
     function getRoyalties(uint256 id)
         public
+        virtual
         view
         returns (LibPart.Part[] memory)
     {

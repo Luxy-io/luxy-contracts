@@ -8,7 +8,6 @@ library LibOrderDataV1 {
     bytes4 constant public V1 = bytes4(keccak256("V1"));
     struct DataV1 {
         LibPart.Part[] payouts;
-        LibPart.Part[] originFees;
     }
 
     function decodeOrderDataV1(bytes memory data) internal pure returns (DataV1 memory orderData) {

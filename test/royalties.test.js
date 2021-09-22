@@ -49,6 +49,7 @@ describe("Tests For Luxy Royalties", function () {
     const tx = await royalties.setRoyalties(20, [{ account: creator1, value: 10 },{ account: creator2, value: 30 },{ account: creator3, value: 20 }]);
 
     const result = await royalties.getRoyalties(20);
+    console.log(result);
     expect(result.length).to.be.equal(3);
     
     expect(result[0][0]).to.be.equal(creator1);

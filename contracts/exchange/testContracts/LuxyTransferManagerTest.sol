@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../LuxyTransferManager.sol";
 import "../interfaces/ITransferExecutor.sol";
 import "../orderControl/OrderValidator.sol";
-
+import "../../Royalties-registry/IRoyaltiesProvider.sol";
 contract LuxyTransferManagerTest is LuxyTransferManager, TransferExecutor, OrderValidator {
 
     function encode(LibOrderDataV1.DataV1 memory data) pure external returns (bytes memory) {
@@ -29,12 +29,13 @@ contract LuxyTransferManagerTest is LuxyTransferManager, TransferExecutor, Order
         INftTransferProxy _transferProxy,
         IERC20TransferProxy _erc20TransferProxy,
         uint newProtocolFee,
-        address newCommunityWallet
+        address newCommunityWallet,
+        IRoyaltiesProvider newRoyaltiesProvider
     ) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __TransferExecutor_init_unchained(_transferProxy, _erc20TransferProxy);
-        __LuxyTransferManager_init_unchained(newProtocolFee, newCommunityWallet);
+        __LuxyTransferManager_init_unchained(newProtocolFee, newCommunityWallet,newRoyaltiesProvider);
         __OrderValidator_init_unchained('Exchange','1');
     }
 }

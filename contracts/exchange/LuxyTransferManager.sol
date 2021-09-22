@@ -14,6 +14,7 @@ import "./interfaces/ITransferExecutor.sol";
 import "./orderControl/LibOrderData.sol";
 import "./lib/LibBP.sol";
 import "./orderControl/LibOrderDataV1.sol";
+import "../Royalties-registry/IRoyaltiesProvider.sol";
 import 'hardhat/console.sol';
 
 
@@ -21,22 +22,51 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     using LibBP for uint;
     using SafeMathUpgradeable for uint;
     uint public protocolFee;
+    IRoyaltiesProvider public royaltiesRegistry;
     address public defaultFeeReceiver;
+    uint public maxPercentRoyalties;
     mapping(address => address) public feeReceivers;
+    mapping(address => uint) public protocolFeeMake;
+    mapping(address => uint) public protocolFeeTake;
 
     function __LuxyTransferManager_init_unchained(
         uint newProtocolFee,
-        address newDefaultFeeReceiver
+        address newDefaultFeeReceiver,
+        IRoyaltiesProvider newRoyaltiesProvider
     ) internal initializer {
         protocolFee = newProtocolFee;
         defaultFeeReceiver = newDefaultFeeReceiver;
+        royaltiesRegistry = newRoyaltiesProvider;
+        maxPercentRoyalties = 98000;
     }
+
+     function setRoyaltiesRegistry(IRoyaltiesProvider newRoyaltiesRegistry) external onlyOwner {
+        royaltiesRegistry = newRoyaltiesRegistry;
+    }
+
       function setProtocolFee(uint newProtocolFee) external onlyOwner {
         protocolFee = newProtocolFee;
     }
 
+    function setMaxPercentRoyalties(uint newPercentage) external onlyOwner {
+        maxPercentRoyalties = newPercentage;
+    }
+
     function setDefaultFeeReceiver(address payable newDefaultFeeReceiver) external onlyOwner {
         defaultFeeReceiver = newDefaultFeeReceiver;
+    }
+
+    function setSpecialProtocolFee(address token,uint newProtocolFeeMake,uint newProtocolFeeTake) external onlyOwner {
+        protocolFeeMake[token] = newProtocolFeeMake;
+        protocolFeeTake[token] = newProtocolFeeTake;
+    }
+
+     function setMakeProtocolFee(address token,uint newProtocolFeeMake) external onlyOwner {
+        protocolFeeMake[token] = newProtocolFeeMake;
+    }
+
+     function setTakeProtocolFee(address token,uint newProtocolFeeTake) external onlyOwner {
+        protocolFeeTake[token] = newProtocolFeeTake;
     }
 
     function setFeeReceiver(address token, address wallet) external onlyOwner {
@@ -65,11 +95,11 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         LibOrderDataV1.DataV1 memory rightOrderData = LibOrderData.parse(rightOrder);
         if (feeSide == LibFeeSide.FeeSide.MAKE) {
             console.log('MAKE SIDE');
-            totalMakeValue = doTransfersWithFees(fill.makeValue, leftOrder.maker, leftOrderData, rightOrderData, makeMatch, takeMatch,  TO_TAKER);
+            totalMakeValue = doTransfersWithFees(fill.makeValue, leftOrder.maker, rightOrderData, makeMatch, takeMatch,  TO_TAKER);
             transferPayouts(takeMatch, fill.takeValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
         } else if (feeSide == LibFeeSide.FeeSide.TAKE) {
             console.log('TAKE SIDE');
-            totalTakeValue = doTransfersWithFees(fill.takeValue, rightOrder.maker, rightOrderData, leftOrderData, takeMatch, makeMatch, TO_MAKER);
+            totalTakeValue = doTransfersWithFees(fill.takeValue, rightOrder.maker, leftOrderData, takeMatch, makeMatch, TO_MAKER);
             transferPayouts(makeMatch, fill.makeValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
         } else {
             console.log('NONE SIDE');
@@ -82,36 +112,41 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     function doTransfersWithFees(
         uint amount,
         address from,
-        LibOrderDataV1.DataV1 memory dataCalculate,
         LibOrderDataV1.DataV1 memory dataNft,
         LibAsset.AssetType memory matchCalculate,
         LibAsset.AssetType memory matchNft,
         bytes4 transferDirection
     ) internal returns (uint totalAmount) {
-        console.log('Transfer with fee');
-        console.log(string(matchNft.data));
-        totalAmount = calculateTotalAmount(amount, protocolFee, dataCalculate.originFees);
-        uint rest = transferProtocolFee(totalAmount, amount, from, matchCalculate, transferDirection);
-        // rest = transferRoyalties(matchCalculate, matchNft, rest, amount, from, transferDirection);
-        (rest,) = transferFees(matchCalculate, rest, amount, dataCalculate.originFees, from, transferDirection, ORIGIN);
-        (rest,) = transferFees(matchCalculate, rest, amount, dataNft.originFees, from, transferDirection, ORIGIN);
+        uint[] memory specialFee;
+        (totalAmount, specialFee) = calculateTotalAmount(amount, protocolFee, matchNft,transferDirection);
+        uint rest = transferProtocolFee(totalAmount,specialFee, amount, from, matchCalculate, transferDirection);
+        rest = transferRoyalties(matchCalculate, matchNft, rest, amount, from, transferDirection);
         transferPayouts(matchCalculate, rest, from, dataNft.payouts, transferDirection);
     }
 
     function transferProtocolFee(
         uint totalAmount,
+        uint[] memory specialFee,
         uint amount,
         address from,
         LibAsset.AssetType memory matchCalculate,
         bytes4 transferDirection
     ) internal returns (uint) {
+        uint rest;
+        uint fee;
         console.log('Checking Total Amount');
         console.log(totalAmount);
         console.log('Checking Amount');
         console.log(amount);
         console.log('Checking PF');
         console.log(protocolFee.mul(2));
-        (uint rest, uint fee) = subFeeInBp(totalAmount, amount, protocolFee.mul(2));
+        if(specialFee.length == 0){
+            console.log('should be here');
+            (rest, fee) = subFeeInBp(totalAmount, amount, protocolFee.mul(2));
+        } else {
+            console.log('should not be here');
+            (rest, fee) = subFeeInBp(totalAmount, amount, specialFee[0].add(specialFee[1]));
+        }
         console.log('Protocol FEE');
         console.log(fee);
         console.log(rest);
@@ -125,33 +160,46 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             }
             console.log('Transfering Protocol fee');
             transfer(LibAsset.Asset(matchCalculate, fee), from, getFeeReceiver(tokenAddress), transferDirection, PROTOCOL);
+            console.log('Done');
         }
         return rest;
     }
 
-    // function transferRoyalties(
-    //     LibAsset.AssetType memory matchCalculate,
-    //     LibAsset.AssetType memory matchNft,
-    //     uint rest,
-    //     uint amount,
-    //     address from,
-    //     bytes4 transferDirection
-    // ) internal returns (uint) {
-    //     LibPart.Part[] memory fees = getRoyaltiesByAssetType(matchNft);
+    function transferRoyalties(
+        LibAsset.AssetType memory matchCalculate,
+        LibAsset.AssetType memory matchNft,
+        uint rest,
+        uint amount,
+        address from,
+        bytes4 transferDirection
+    ) internal returns (uint) {
+        console.log('Getting royalties');
+        LibPart.Part[] memory fees = getRoyaltiesByAssetType(matchNft);
+        console.log('Returning royalties');
+        for(uint i = 0; i < fees.length; i++){
+            console.log('fees:');
+            console.log(fees[i].value);
+            console.log(fees[i].account);
+        }
 
-    //     (uint result, uint totalRoyalties) = transferFees(matchCalculate, rest, amount, fees, from, transferDirection, ROYALTY);
-    //     require(totalRoyalties <= 5000, "Royalties are too high (>50%)");
-    //     return result;
-    // }
+        (uint result, uint totalRoyalties) = transferFees(matchCalculate, rest, amount, fees, from, transferDirection, ROYALTY);
+        require(totalRoyalties <= maxPercentRoyalties, "Royalties are too high (>98%)");
+        return result;
+    }
 
-    // function getRoyaltiesByAssetType(LibAsset.AssetType memory matchNft) internal returns (LibPart.Part[] memory) {
-    //     if (matchNft.assetClass == LibAsset.ERC1155_ASSET_CLASS || matchNft.assetClass == LibAsset.ERC721_ASSET_CLASS) {
-    //         (address token, uint tokenId) = abi.decode(matchNft.data, (address, uint));
-    //         return royaltiesRegistry.getRoyalties(token, tokenId);
-    //     }
-    //     LibPart.Part[] memory empty;
-    //     return empty;
-    // }
+    function getRoyaltiesByAssetType(LibAsset.AssetType memory matchNft) internal returns (LibPart.Part[] memory) {
+        console.log('Getting royalties');
+        console.log(uint32(matchNft.assetClass));
+        if (matchNft.assetClass == LibAsset.ERC1155_ASSET_CLASS || matchNft.assetClass == LibAsset.ERC721_ASSET_CLASS) {
+            (address token, uint tokenId) = abi.decode(matchNft.data, (address, uint));
+            console.log('Token:');
+            console.log(token);
+            console.log(tokenId);
+            return royaltiesRegistry.getRoyalties(token, tokenId);
+        }
+        LibPart.Part[] memory empty;
+        return empty;
+    }
 
     function transferFees(
         LibAsset.AssetType memory matchCalculate,
@@ -202,12 +250,35 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     function calculateTotalAmount(
         uint amount,
         uint feeOnTopBp,
-        LibPart.Part[] memory orderOriginFees
-    ) internal pure returns (uint total){
-        total = amount.add(amount.bp(feeOnTopBp));
-        for (uint256 i = 0; i < orderOriginFees.length; i++) {
-            total = total.add(amount.bp(orderOriginFees[i].value));
+        LibAsset.AssetType memory matchNft,
+        bytes4 transferDirection
+    ) internal view returns (uint total, uint[] memory specialFee){
+        (address token) = abi.decode(matchNft.data, (address));
+        if(transferDirection == TO_MAKER){
+            if(protocolFeeMake[token] != 0){
+                console.log('not here');
+                console.log(token);
+                console.log(protocolFeeMake[token]);
+                total = amount.add(amount.bp(protocolFeeMake[token]));
+                specialFee[0] = amount.bp(protocolFeeMake[token]);
+                specialFee[1] = amount.bp(protocolFeeTake[token]);
+                return (total, specialFee);
+            }
+        
         }
+        else if(transferDirection == TO_TAKER){
+              if(protocolFeeTake[token] != 0){
+                console.log('not here');
+                console.log(token);
+                console.log(protocolFeeMake[token]);
+                total = amount.add(amount.bp(protocolFeeTake[token]));
+                specialFee[0] = amount.bp(protocolFeeMake[token]);
+                specialFee[1] = amount.bp(protocolFeeTake[token]);
+                return (total, specialFee);
+            }
+        }
+        total = amount.add(amount.bp(feeOnTopBp));
+
     }
 
     function subFeeInBp(uint value, uint total, uint feeInBp) internal pure returns (uint newValue, uint realFee) {
