@@ -28,6 +28,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     mapping(address => address) public feeReceivers;
     mapping(address => uint) public protocolFeeMake;
     mapping(address => uint) public protocolFeeTake;
+    mapping(address => bool) public protocolFeeSet;
 
     function __LuxyTransferManager_init_unchained(
         uint newProtocolFee,
@@ -59,14 +60,17 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     function setSpecialProtocolFee(address token,uint newProtocolFeeMake,uint newProtocolFeeTake) external onlyOwner {
         protocolFeeMake[token] = newProtocolFeeMake;
         protocolFeeTake[token] = newProtocolFeeTake;
+        protocolFeeSet[token] = true;
     }
 
      function setMakeProtocolFee(address token,uint newProtocolFeeMake) external onlyOwner {
         protocolFeeMake[token] = newProtocolFeeMake;
+        protocolFeeSet[token] = true;
     }
 
      function setTakeProtocolFee(address token,uint newProtocolFeeTake) external onlyOwner {
         protocolFeeTake[token] = newProtocolFeeTake;
+        protocolFeeSet[token] = true;
     }
 
     function setFeeReceiver(address token, address wallet) external onlyOwner {
@@ -96,10 +100,14 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         if (feeSide == LibFeeSide.FeeSide.MAKE) {
             console.log('MAKE SIDE');
             totalMakeValue = doTransfersWithFees(fill.makeValue, leftOrder.maker, rightOrderData, makeMatch, takeMatch,  TO_TAKER);
+            console.log('Transferring the NFT');
+            console.log(totalMakeValue);
             transferPayouts(takeMatch, fill.takeValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
         } else if (feeSide == LibFeeSide.FeeSide.TAKE) {
             console.log('TAKE SIDE');
             totalTakeValue = doTransfersWithFees(fill.takeValue, rightOrder.maker, leftOrderData, takeMatch, makeMatch, TO_MAKER);
+            console.log('Transferring the NFT');
+            console.log(totalMakeValue);
             transferPayouts(makeMatch, fill.makeValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
         } else {
             console.log('NONE SIDE');
@@ -117,16 +125,18 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         LibAsset.AssetType memory matchNft,
         bytes4 transferDirection
     ) internal returns (uint totalAmount) {
-        uint[] memory specialFee;
-        (totalAmount, specialFee) = calculateTotalAmount(amount, protocolFee, matchNft,transferDirection);
-        uint rest = transferProtocolFee(totalAmount,specialFee, amount, from, matchCalculate, transferDirection);
+        uint[2] memory specialFee;
+        bool isEspecialFee;
+        (totalAmount, specialFee, isEspecialFee) = calculateTotalAmount(amount, protocolFee, matchNft,transferDirection);
+        uint rest = transferProtocolFee(totalAmount,specialFee,isEspecialFee, amount, from, matchCalculate, transferDirection);
         rest = transferRoyalties(matchCalculate, matchNft, rest, amount, from, transferDirection);
         transferPayouts(matchCalculate, rest, from, dataNft.payouts, transferDirection);
     }
 
     function transferProtocolFee(
         uint totalAmount,
-        uint[] memory specialFee,
+        uint[2] memory specialFee,
+        bool isEspecialFee,
         uint amount,
         address from,
         LibAsset.AssetType memory matchCalculate,
@@ -140,12 +150,22 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         console.log(amount);
         console.log('Checking PF');
         console.log(protocolFee.mul(2));
-        if(specialFee.length == 0){
-            console.log('should be here');
+        if(!isEspecialFee){
             (rest, fee) = subFeeInBp(totalAmount, amount, protocolFee.mul(2));
         } else {
-            console.log('should not be here');
+            console.log('should be here now uhul');
+            console.log('Check individually');
+            console.log(specialFee[0]);
+            console.log(specialFee[1]);
+            console.log('Check addition');
+            console.log(protocolFee.mul(2));
+            console.log(specialFee[0].add(specialFee[1]));
+            console.log(specialFee[1].add(specialFee[0]));
+            console.log('check total amount');
+            console.log(totalAmount);
+            console.log(amount);
             (rest, fee) = subFeeInBp(totalAmount, amount, specialFee[0].add(specialFee[1]));
+            console.log(fee);
         }
         console.log('Protocol FEE');
         console.log(fee);
@@ -217,9 +237,13 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             (uint newRestValue, uint feeValue) = subFeeInBp(restValue, amount,  fees[i].value);
             restValue = newRestValue;
             if (feeValue > 0) {
+                console.log('Trying to transfer fees');
                 transfer(LibAsset.Asset(matchCalculate, feeValue), from,  fees[i].account, transferDirection, transferType);
             }
         }
+        console.log('Transfered fees');
+        console.log(totalFees);
+        console.log(restValue);
     }
 
     function transferPayouts(
@@ -239,12 +263,16 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
                 transfer(LibAsset.Asset(matchCalculate, currentAmount), from, payouts[i].account, transferDirection, PAYOUT);
             }
         }
+        console.log('Transfered payouts');
         LibPart.Part memory lastPayout = payouts[payouts.length - 1];
         sumBps = sumBps.add(lastPayout.value);
+        console.log(sumBps);
+        console.log(restValue);
         require(sumBps == 10000, "Sum payouts Bps not equal 100%");
         if (restValue > 0) {
             transfer(LibAsset.Asset(matchCalculate, restValue), from, lastPayout.account, transferDirection, PAYOUT);
         }
+        console.log('Done');
     }
 
     function calculateTotalAmount(
@@ -252,29 +280,32 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         uint feeOnTopBp,
         LibAsset.AssetType memory matchNft,
         bytes4 transferDirection
-    ) internal view returns (uint total, uint[] memory specialFee){
+    ) internal view returns (uint total, uint[2] memory specialFee, bool isSpecialFee) {
         (address token) = abi.decode(matchNft.data, (address));
         if(transferDirection == TO_MAKER){
-            if(protocolFeeMake[token] != 0){
+            if(protocolFeeSet[token]){
                 console.log('not here');
                 console.log(token);
                 console.log(protocolFeeMake[token]);
                 total = amount.add(amount.bp(protocolFeeMake[token]));
-                specialFee[0] = amount.bp(protocolFeeMake[token]);
-                specialFee[1] = amount.bp(protocolFeeTake[token]);
-                return (total, specialFee);
+                specialFee[0] = (protocolFeeMake[token]);
+                specialFee[1] = (protocolFeeTake[token]);
+                protocolFeeSet[token];
+                isSpecialFee = true;
+                return (total, specialFee,isSpecialFee);
             }
         
         }
         else if(transferDirection == TO_TAKER){
-              if(protocolFeeTake[token] != 0){
+              if(protocolFeeSet[token]){
                 console.log('not here');
                 console.log(token);
                 console.log(protocolFeeMake[token]);
                 total = amount.add(amount.bp(protocolFeeTake[token]));
-                specialFee[0] = amount.bp(protocolFeeMake[token]);
-                specialFee[1] = amount.bp(protocolFeeTake[token]);
-                return (total, specialFee);
+                specialFee[0] = (protocolFeeMake[token]);
+                specialFee[1] = (protocolFeeTake[token]);
+                isSpecialFee = true;
+                return (total, specialFee,isSpecialFee);
             }
         }
         total = amount.add(amount.bp(feeOnTopBp));

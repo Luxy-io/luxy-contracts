@@ -34,7 +34,7 @@ contract TestERC1155Royalties is   ERC165StorageUpgradeable, RoyaltiesV1Luxy, ER
             super.supportsInterface(_interfaceId);
     }
 
-    function getRoyalties(uint256) override public view returns (LibPart.Part[] memory) {
+    function getRoyalties(uint256) override public pure returns (LibPart.Part[] memory) {
         revert("getRaribleV2Royalties failed");
     }
 

@@ -40,7 +40,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             royaltiesByToken[token].royalties.push(royalties[i]);
             sumRoyalties += royalties[i].value;
         }
-        require(sumRoyalties < 10000, "Set by token royalties sum more, than 100%");
+        require(sumRoyalties <= 3000, "Set by token royalties sum more, than 30%");
         royaltiesByToken[token].initialized = true;
         emit RoyaltiesSetForContract(token, royalties);
     }
@@ -65,19 +65,31 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         }
     }
     function getRoyalties(address token, uint tokenId) override external returns (LibPart.Part[] memory) {
-        RoyaltiesSet memory royaltiesSet = royaltiesByTokenAndTokenId[keccak256(abi.encode(token, tokenId))];
-        if (royaltiesSet.initialized) {
-            return royaltiesSet.royalties;
+        RoyaltiesSet storage royaltiesSetNFT = royaltiesByTokenAndTokenId[keccak256(abi.encode(token, tokenId))];
+        RoyaltiesSet storage royaltiesSetToken = royaltiesByToken[token];
+        if (royaltiesSetNFT.initialized && royaltiesSetToken.initialized) {
+            for(uint i=0; i<royaltiesSetNFT.royalties.length; i++) {
+                royaltiesSetToken.royalties.push(royaltiesSetNFT.royalties[i]);
+            }
+            return royaltiesSetToken.royalties;
         }
-        royaltiesSet = royaltiesByToken[token];
-        if (royaltiesSet.initialized) {
-            return royaltiesSet.royalties;
+        else if (royaltiesSetNFT.initialized) {
+            return royaltiesSetNFT.royalties;
         }
+        
         (bool result, LibPart.Part[] memory resultRoyalties) = providerExtractor(token, tokenId);
         if (result == false) {
             resultRoyalties = royaltiesFromContract(token, tokenId);
         }
         setRoyaltiesCacheByTokenAndTokenId(token, tokenId, resultRoyalties);
+        if(royaltiesSetToken.initialized) {
+            if(resultRoyalties.length > 0) {
+                for(uint i=0; i<resultRoyalties.length; i++) {
+                    royaltiesSetToken.royalties.push(resultRoyalties[i]);
+                }
+            }
+                return royaltiesSetToken.royalties;
+        }
         return resultRoyalties;
     }
 
@@ -91,7 +103,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             royaltiesByTokenAndTokenId[key].royalties.push(royalties[i]);
             sumRoyalties += royalties[i].value;
         }
-        require(sumRoyalties < 10000, "Set by token and tokenId royalties sum more, than 100%");
+        require(sumRoyalties <= 6800, "Set by token and tokenId royalties sum more, than 68%");
         royaltiesByTokenAndTokenId[key].initialized = true;
         emit RoyaltiesSetForToken(token, tokenId, royalties);
     }

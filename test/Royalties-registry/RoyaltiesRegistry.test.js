@@ -90,13 +90,13 @@ describe ('RoyaltiesRegistry', function(){
 
         it("Luxy royalties: royalties set upon collection", async () => {
 
-            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, [[accounts[3], 600], [accounts[4], 1100]]); //set royalties by token and tokenId
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, [[accounts[3], 600], [accounts[4], 1100]]); //set royalties by token
 
         
             await erc721Token.mint(accounts[0], erc721TokenId1); //Testing if royalties will be added upon after created token
             part =  await royaltiesRegistryTest._getRoyalties(royaltiesRegistry.address, erc721Token.address, erc721TokenId1);
             tx_receipt = await part.wait()
-            royaltiesResponse = tx_receipt.events[0].args.royalties
+            royaltiesResponse = tx_receipt.events[1].args.royalties
             expect(royaltiesResponse.length).to.be.equal(2);
             expect(royaltiesResponse[0].account).to.be.equal(accounts[3]);
             expect(royaltiesResponse[0].value.toNumber()).to.be.equal(600);
@@ -104,7 +104,7 @@ describe ('RoyaltiesRegistry', function(){
             expect(royaltiesResponse[1].value.toNumber()).to.be.equal(1100);
             part =  await royaltiesRegistryTest._getRoyalties(royaltiesRegistry.address, erc721Token.address, 14); //Any token from this collection should have royalties
             tx_receipt = await part.wait()
-            royaltiesResponse = tx_receipt.events[0].args.royalties
+            royaltiesResponse = tx_receipt.events[1].args.royalties
             expect(royaltiesResponse.length).to.be.equal(2);
             expect(royaltiesResponse[0].account).to.be.equal(accounts[3]);
             expect(royaltiesResponse[0].value.toNumber()).to.be.equal(600);
@@ -154,7 +154,7 @@ describe ('RoyaltiesRegistry', function(){
             expect(royaltiesResponse[1].value.toNumber()).to.be.equal(1100);
             
         });
-        it("Luxy Royalties: royaltiesSum>100% throw detected ", async () => {
+        it("Luxy Royalties: royaltiesSum>68% throw detected ", async () => {
             const Luxy721 = await ethers.getContractFactory('ERC721Luxy');
             externalLuxy = await upgrades.deployProxy(
                 Luxy721,
@@ -164,10 +164,55 @@ describe ('RoyaltiesRegistry', function(){
             await externalLuxy.deployed();
             await externalLuxy.transferOwnership(owner.address);
 			await expectRevert(
-                royaltiesRegistry.connect(owner).setRoyaltiesByTokenAndTokenId(externalLuxy.address, erc721TokenId1, [[accounts[3], 9200], [accounts[4], 1100]]),
-                "Set by token and tokenId royalties sum more, than 100%"
+                royaltiesRegistry.connect(owner).setRoyaltiesByTokenAndTokenId(externalLuxy.address, erc721TokenId1, [[accounts[3], 5000], [accounts[4], 1801]]),
+                "Set by token and tokenId royalties sum more, than 68%"
             );
 		})
+        it("Luxy Royalties: royaltiesSum>30% throw detected ", async () => {
+            const Luxy721 = await ethers.getContractFactory('ERC721Luxy');
+            externalLuxy = await upgrades.deployProxy(
+                Luxy721,
+                ['Owner', 'own',''],
+                { initializer: '__ERC721Luxy_init'}
+            );
+            await externalLuxy.deployed();
+            await externalLuxy.transferOwnership(owner.address);
+			await expectRevert(
+                royaltiesRegistry.connect(owner).setRoyaltiesByToken(externalLuxy.address, [[accounts[3], 2000], [accounts[4], 1001]]),
+                "Set by token royalties sum more, than 30%"
+            );
+		})
+        it("Luxy Royalties: royalties on TokenId and Token set ", async () => {
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, [[accounts[3], 600], [accounts[4], 1100]]); //set royalties by token
+            await royaltiesRegistry.setRoyaltiesByTokenAndTokenId(erc721Token.address, erc721TokenId1, [[accounts[5], 1000], [accounts[7], 3000]]); //set royalties by token and tokenId
+            part = await royaltiesRegistryTest._getRoyalties(royaltiesRegistry.address, erc721Token.address, erc721TokenId1);
+            tx_receipt = await part.wait()
+            royaltiesResponse = tx_receipt.events[0].args.royalties
+            expect(royaltiesResponse.length).to.be.equal(4);
+            expect(royaltiesResponse[0].account).to.be.equal(accounts[3]);
+            expect(royaltiesResponse[0].value.toNumber()).to.be.equal(600);
+            expect(royaltiesResponse[1].account).to.be.equal(accounts[4]);
+            expect(royaltiesResponse[1].value.toNumber()).to.be.equal(1100);
+            expect(royaltiesResponse[2].account).to.be.equal(accounts[5]);
+            expect(royaltiesResponse[2].value.toNumber()).to.be.equal(1000);
+            expect(royaltiesResponse[3].account).to.be.equal(accounts[7]);
+            expect(royaltiesResponse[3].value.toNumber()).to.be.equal(3000);
+            //Verify if changes are correct
+            await royaltiesRegistry.setRoyaltiesByTokenAndTokenId(erc721Token.address, erc721TokenId1, [[accounts[5], 500], [accounts[7], 1500]]); //set royalties by token and tokenId
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, [[accounts[3], 300], [accounts[4], 1000]]); //set royalties by token
+            part = await royaltiesRegistryTest._getRoyalties(royaltiesRegistry.address, erc721Token.address, erc721TokenId1);
+            tx_receipt = await part.wait()
+            royaltiesResponse = tx_receipt.events[0].args.royalties
+            expect(royaltiesResponse.length).to.be.equal(4);
+            expect(royaltiesResponse[0].account).to.be.equal(accounts[3]);
+            expect(royaltiesResponse[0].value.toNumber()).to.be.equal(300);
+            expect(royaltiesResponse[1].account).to.be.equal(accounts[4]);
+            expect(royaltiesResponse[1].value.toNumber()).to.be.equal(1000);
+            expect(royaltiesResponse[2].account).to.be.equal(accounts[5]);
+            expect(royaltiesResponse[2].value.toNumber()).to.be.equal(500);
+            expect(royaltiesResponse[3].account).to.be.equal(accounts[7]);
+            expect(royaltiesResponse[3].value.toNumber()).to.be.equal(1500);
+        });
     
     
     
