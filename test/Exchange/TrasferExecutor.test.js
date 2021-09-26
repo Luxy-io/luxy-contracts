@@ -42,13 +42,9 @@ describe ('TransferExecutor', function(){
     context('Testing Transfer', function(){ 
 
         it("should support ETH transfers", async () => {
-            const beforeOwner = new BN(await web3.eth.getBalance(spender.address));
-            const beforeSpender = new BN(await web3.eth.getBalance(accounts[5]));
-            await testing.connect(spender).transferTest(order.Asset(ETH, "0x", 500), spender.address, accounts[5], { value: 500})
-            const afterOwner = new BN(await web3.eth.getBalance(spender.address));
-            const afterSpender = new BN(await web3.eth.getBalance(accounts[5]));
-            expect(beforeOwner.sub(afterOwner).toString()).to.equal("480600"); // This value also includes gas costs
-            expect(afterSpender.sub(beforeSpender).toString()).to.equal("500");
+            await testing.connect(spender).transferTest(order.Asset(ETH, "0x", 500), spender.address, holder.address, { value: 500})
+            await expect(await testing.connect(spender).transferTest(order.Asset(ETH, "0x", 500), spender.address, holder.address, { value: 500}))
+            .to.changeEtherBalances([spender,holder], [-500,500]);
         })
     
         it("should support ERC20 transfers", async () => {

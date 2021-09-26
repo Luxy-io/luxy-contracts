@@ -1,3 +1,43 @@
+/*
+                            __;φφφ≥,,╓╓,__
+                           _φ░░░░░░░░░░░░░φ,_
+                           φ░░░░░░░░░░░░╚░░░░_
+                           ░░░░░░░░░░░░░░░▒▒░▒_
+                          _░░░░░░░░░░░░░░░░╬▒░░_
+    _≤,                    _░░░░░░░░░░░░░░░░╠░░ε
+    _Σ░≥_                   `░░░░░░░░░░░░░░░╚░░░_
+     _φ░░                     ░░░░░░░░░░░░░░░▒░░
+       ░░░,                    `░░░░░░░░░░░░░╠░░___
+       _░░░░░≥,                 _`░░░░░░░░░░░░░░░░░φ≥, _
+       ▒░░░░░░░░,_                _ ░░░░░░░░░░░░░░░░░░░░░≥,_
+      ▐░░░░░░░░░░░                 φ░░░░░░░░░░░░░░░░░░░░░░░▒,
+       ░░░░░░░░░░░[             _;░░░░░░░░░░░░░░░░░░░░░░░░░░░
+       \░░░░░░░░░░░»;;--,,. _  ,░░░░░░░░░░░░░░░░░░░░░░░░░░░░░Γ
+       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,
+         _"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"=░░░░░░░░░░░░░░░░░
+            Σ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_    `╙δ░░░░Γ"  ²░Γ_
+         ,φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_
+       _φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ░░≥_
+      ,▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░≥
+     ,░░░░░░░░░░░░░░░░░╠▒░▐░░░░░░░░░░░░░░░╚░░░░░≥
+    _░░░░░░░░░░░░░░░░░░▒░░▐░░░░░░░░░░░░░░░░╚▒░░░░░
+    φ░░░░░░░░░░░░░░░░░φ░░Γ'░░░░░░░░░░░░░░░░░░░░░░░░
+    ░░░░░░░░░░░░░░░░░░░░░_ ░░░░░░░░░░░░░░░░░░░░░░░░[
+    ╚░░░░░░░░░░░░░░░░░░░_  └░░░░░░░░░░░░░░░░░░░░░░░░
+    _╚░░░░░░░░░░░░░▒"^     _7░░░░░░░░░░░░░░░░░░░░░░Γ
+     _`╚░░░░░░░░╚²_          \░░░░░░░░░░░░░░░░░░░░Γ
+         ____                _`░░░░░░░░░░░░░░░Γ╙`
+                               _"φ░░░░░░░░░░╚_
+                                 _ `""²ⁿ""
+
+        ██╗         ██╗   ██╗    ██╗  ██╗    ██╗   ██╗
+        ██║         ██║   ██║    ╚██╗██╔╝    ╚██╗ ██╔╝
+        ██║         ██║   ██║     ╚███╔╝      ╚████╔╝ 
+        ██║         ██║   ██║     ██╔██╗       ╚██╔╝  
+        ███████╗    ╚██████╔╝    ██╔╝ ██╗       ██║   
+        ╚══════╝     ╚═════╝     ╚═╝  ╚═╝       ╚═╝   
+*/
+
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
@@ -15,7 +55,6 @@ import "./orderControl/LibOrderData.sol";
 import "./lib/LibBP.sol";
 import "./orderControl/LibOrderDataV1.sol";
 import "../Royalties-registry/IRoyaltiesProvider.sol";
-import 'hardhat/console.sol';
 
 
 abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
@@ -98,19 +137,12 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         LibOrderDataV1.DataV1 memory leftOrderData = LibOrderData.parse(leftOrder);
         LibOrderDataV1.DataV1 memory rightOrderData = LibOrderData.parse(rightOrder);
         if (feeSide == LibFeeSide.FeeSide.MAKE) {
-            console.log('MAKE SIDE');
             totalMakeValue = doTransfersWithFees(fill.makeValue, leftOrder.maker, rightOrderData, makeMatch, takeMatch,  TO_TAKER);
-            console.log('Transferring the NFT');
-            console.log(totalMakeValue);
             transferPayouts(takeMatch, fill.takeValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
         } else if (feeSide == LibFeeSide.FeeSide.TAKE) {
-            console.log('TAKE SIDE');
             totalTakeValue = doTransfersWithFees(fill.takeValue, rightOrder.maker, leftOrderData, takeMatch, makeMatch, TO_MAKER);
-            console.log('Transferring the NFT');
-            console.log(totalMakeValue);
             transferPayouts(makeMatch, fill.makeValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
         } else {
-            console.log('NONE SIDE');
             transferPayouts(makeMatch, fill.makeValue, leftOrder.maker, rightOrderData.payouts, TO_TAKER);
             transferPayouts(takeMatch, fill.takeValue, rightOrder.maker, leftOrderData.payouts, TO_MAKER);
         }
@@ -127,7 +159,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     ) internal returns (uint totalAmount) {
         uint[2] memory specialFee;
         bool isEspecialFee;
-        (totalAmount, specialFee, isEspecialFee) = calculateTotalAmount(amount, protocolFee, matchNft,transferDirection);
+        (totalAmount, specialFee, isEspecialFee) = calculateTotalAmount(amount, protocolFee, matchNft, matchCalculate,transferDirection);
         uint rest = transferProtocolFee(totalAmount,specialFee,isEspecialFee, amount, from, matchCalculate, transferDirection);
         rest = transferRoyalties(matchCalculate, matchNft, rest, amount, from, transferDirection);
         transferPayouts(matchCalculate, rest, from, dataNft.payouts, transferDirection);
@@ -144,32 +176,11 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     ) internal returns (uint) {
         uint rest;
         uint fee;
-        console.log('Checking Total Amount');
-        console.log(totalAmount);
-        console.log('Checking Amount');
-        console.log(amount);
-        console.log('Checking PF');
-        console.log(protocolFee.mul(2));
         if(!isEspecialFee){
             (rest, fee) = subFeeInBp(totalAmount, amount, protocolFee.mul(2));
         } else {
-            console.log('should be here now uhul');
-            console.log('Check individually');
-            console.log(specialFee[0]);
-            console.log(specialFee[1]);
-            console.log('Check addition');
-            console.log(protocolFee.mul(2));
-            console.log(specialFee[0].add(specialFee[1]));
-            console.log(specialFee[1].add(specialFee[0]));
-            console.log('check total amount');
-            console.log(totalAmount);
-            console.log(amount);
             (rest, fee) = subFeeInBp(totalAmount, amount, specialFee[0].add(specialFee[1]));
-            console.log(fee);
         }
-        console.log('Protocol FEE');
-        console.log(fee);
-        console.log(rest);
         if (fee > 0) {
             address tokenAddress = address(0);
             if (matchCalculate.assetClass == LibAsset.ERC20_ASSET_CLASS) {
@@ -178,9 +189,8 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
                 uint tokenId;
                 (tokenAddress, tokenId) = abi.decode(matchCalculate.data, (address, uint));
             }
-            console.log('Transfering Protocol fee');
+
             transfer(LibAsset.Asset(matchCalculate, fee), from, getFeeReceiver(tokenAddress), transferDirection, PROTOCOL);
-            console.log('Done');
         }
         return rest;
     }
@@ -193,14 +203,9 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         address from,
         bytes4 transferDirection
     ) internal returns (uint) {
-        console.log('Getting royalties');
+
         LibPart.Part[] memory fees = getRoyaltiesByAssetType(matchNft);
-        console.log('Returning royalties');
-        for(uint i = 0; i < fees.length; i++){
-            console.log('fees:');
-            console.log(fees[i].value);
-            console.log(fees[i].account);
-        }
+
 
         (uint result, uint totalRoyalties) = transferFees(matchCalculate, rest, amount, fees, from, transferDirection, ROYALTY);
         require(totalRoyalties <= maxPercentRoyalties, "Royalties are too high (>98%)");
@@ -208,13 +213,8 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     }
 
     function getRoyaltiesByAssetType(LibAsset.AssetType memory matchNft) internal returns (LibPart.Part[] memory) {
-        console.log('Getting royalties');
-        console.log(uint32(matchNft.assetClass));
         if (matchNft.assetClass == LibAsset.ERC1155_ASSET_CLASS || matchNft.assetClass == LibAsset.ERC721_ASSET_CLASS) {
             (address token, uint tokenId) = abi.decode(matchNft.data, (address, uint));
-            console.log('Token:');
-            console.log(token);
-            console.log(tokenId);
             return royaltiesRegistry.getRoyalties(token, tokenId);
         }
         LibPart.Part[] memory empty;
@@ -237,13 +237,9 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             (uint newRestValue, uint feeValue) = subFeeInBp(restValue, amount,  fees[i].value);
             restValue = newRestValue;
             if (feeValue > 0) {
-                console.log('Trying to transfer fees');
                 transfer(LibAsset.Asset(matchCalculate, feeValue), from,  fees[i].account, transferDirection, transferType);
             }
         }
-        console.log('Transfered fees');
-        console.log(totalFees);
-        console.log(restValue);
     }
 
     function transferPayouts(
@@ -263,53 +259,62 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
                 transfer(LibAsset.Asset(matchCalculate, currentAmount), from, payouts[i].account, transferDirection, PAYOUT);
             }
         }
-        console.log('Transfered payouts');
         LibPart.Part memory lastPayout = payouts[payouts.length - 1];
         sumBps = sumBps.add(lastPayout.value);
-        console.log(sumBps);
-        console.log(restValue);
         require(sumBps == 10000, "Sum payouts Bps not equal 100%");
         if (restValue > 0) {
             transfer(LibAsset.Asset(matchCalculate, restValue), from, lastPayout.account, transferDirection, PAYOUT);
         }
-        console.log('Done');
     }
 
     function calculateTotalAmount(
         uint amount,
         uint feeOnTopBp,
         LibAsset.AssetType memory matchNft,
+        LibAsset.AssetType memory matchCalculate,
         bytes4 transferDirection
     ) internal view returns (uint total, uint[2] memory specialFee, bool isSpecialFee) {
+        address token2 = address(0);
         (address token) = abi.decode(matchNft.data, (address));
-        if(transferDirection == TO_MAKER){
-            if(protocolFeeSet[token]){
-                console.log('not here');
-                console.log(token);
-                console.log(protocolFeeMake[token]);
-                total = amount.add(amount.bp(protocolFeeMake[token]));
+        if(LibAsset.ETH_ASSET_CLASS != matchCalculate.assetClass){
+            (token2) = abi.decode(matchCalculate.data, (address));
+        }
+        if(protocolFeeSet[token] && protocolFeeSet[token2]){
+            uint totalFeeToken = protocolFeeMake[token].add(protocolFeeTake[token]);
+            uint totalFeeToken2 = protocolFeeMake[token2].add(protocolFeeTake[token2]);
+            if(totalFeeToken > totalFeeToken2){
+                total = amount.add(amount.bp(transferDirection == TO_MAKER ? protocolFeeMake[token2] : protocolFeeTake[token2]));
+                specialFee[0] = (protocolFeeMake[token2]);
+                specialFee[1] = (protocolFeeTake[token2]);
+                protocolFeeSet[token2];
+                isSpecialFee = true;
+            }
+            else{
+                total = amount.add(amount.bp(transferDirection == TO_MAKER ? protocolFeeMake[token] : protocolFeeTake[token]));
                 specialFee[0] = (protocolFeeMake[token]);
                 specialFee[1] = (protocolFeeTake[token]);
                 protocolFeeSet[token];
                 isSpecialFee = true;
-                return (total, specialFee,isSpecialFee);
             }
+        }
+        else if(protocolFeeSet[token]){
+            total = amount.add(amount.bp(transferDirection == TO_MAKER ? protocolFeeMake[token] : protocolFeeTake[token]));
+            specialFee[0] = (protocolFeeMake[token]);
+            specialFee[1] = (protocolFeeTake[token]);
+            protocolFeeSet[token];
+            isSpecialFee = true;
+        }
+        else if(protocolFeeSet[token2]){
+            total = amount.add(amount.bp(transferDirection == TO_MAKER ? protocolFeeMake[token2] : protocolFeeTake[token2]));
+            specialFee[0] = (protocolFeeMake[token2]);
+            specialFee[1] = (protocolFeeTake[token2]);
+            protocolFeeSet[token2];
+            isSpecialFee = true;
+        }
         
-        }
-        else if(transferDirection == TO_TAKER){
-              if(protocolFeeSet[token]){
-                console.log('not here');
-                console.log(token);
-                console.log(protocolFeeMake[token]);
-                total = amount.add(amount.bp(protocolFeeTake[token]));
-                specialFee[0] = (protocolFeeMake[token]);
-                specialFee[1] = (protocolFeeTake[token]);
-                isSpecialFee = true;
-                return (total, specialFee,isSpecialFee);
-            }
-        }
+        if(!protocolFeeSet[token]){
         total = amount.add(amount.bp(feeOnTopBp));
-
+        }
     }
 
     function subFeeInBp(uint value, uint total, uint feeInBp) internal pure returns (uint newValue, uint realFee) {

@@ -54,28 +54,28 @@ describe ('LibOrder', function(){
             })
     
             it("should not throw if dates are correct", async () => {
-                const now = parseInt(new Date() / 1000);
-                await lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now - 500, now + 500, "0xffffffff", "0x"))
+                const now = parseInt(Date.now() / 1000);
+                await lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now - 10000, now + 10000, "0xffffffff", "0x"))
             })
     
             it("should throw if start date error", async () => {
-                const now = parseInt(new Date() / 1000);
+                const now = parseInt(Date.now() / 1000);
                 await expectRevert.unspecified(
-                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now + 500, 0, "0xffffffff", "0x"))
+                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now + 15000, 0, "0xffffffff", "0x"))
                 )
             })
     
             it("should throw if end date error", async () => {
-                const now = parseInt(new Date() / 1000);
+                const now = parseInt(Date.now() / 1000);
                 await expectRevert.unspecified(
-                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, 0, now - 100, "0xffffffff", "0x"))
+                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, 0, now - 10000, "0xffffffff", "0x"))
                 )
             })
     
             it("should throw if both dates error", async () => {
-                const now = parseInt(new Date() / 1000);
+                const now = parseInt(Date.now() / 1000);
                 await expectRevert.unspecified(
-                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now + 100, now - 100, "0xffffffff", "0x"))
+                    lib.validate(order.Order(ZERO_ADDRESS, testAsset, ZERO_ADDRESS, testAsset, 0, now + 10000, now - 10000, "0xffffffff", "0x"))
                 )
             })
     

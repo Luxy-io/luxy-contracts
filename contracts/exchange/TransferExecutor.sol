@@ -1,3 +1,43 @@
+/*
+                            __;φφφ≥,,╓╓,__
+                           _φ░░░░░░░░░░░░░φ,_
+                           φ░░░░░░░░░░░░╚░░░░_
+                           ░░░░░░░░░░░░░░░▒▒░▒_
+                          _░░░░░░░░░░░░░░░░╬▒░░_
+    _≤,                    _░░░░░░░░░░░░░░░░╠░░ε
+    _Σ░≥_                   `░░░░░░░░░░░░░░░╚░░░_
+     _φ░░                     ░░░░░░░░░░░░░░░▒░░
+       ░░░,                    `░░░░░░░░░░░░░╠░░___
+       _░░░░░≥,                 _`░░░░░░░░░░░░░░░░░φ≥, _
+       ▒░░░░░░░░,_                _ ░░░░░░░░░░░░░░░░░░░░░≥,_
+      ▐░░░░░░░░░░░                 φ░░░░░░░░░░░░░░░░░░░░░░░▒,
+       ░░░░░░░░░░░[             _;░░░░░░░░░░░░░░░░░░░░░░░░░░░
+       \░░░░░░░░░░░»;;--,,. _  ,░░░░░░░░░░░░░░░░░░░░░░░░░░░░░Γ
+       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,
+         _"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"=░░░░░░░░░░░░░░░░░
+            Σ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_    `╙δ░░░░Γ"  ²░Γ_
+         ,φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_
+       _φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ░░≥_
+      ,▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░≥
+     ,░░░░░░░░░░░░░░░░░╠▒░▐░░░░░░░░░░░░░░░╚░░░░░≥
+    _░░░░░░░░░░░░░░░░░░▒░░▐░░░░░░░░░░░░░░░░╚▒░░░░░
+    φ░░░░░░░░░░░░░░░░░φ░░Γ'░░░░░░░░░░░░░░░░░░░░░░░░
+    ░░░░░░░░░░░░░░░░░░░░░_ ░░░░░░░░░░░░░░░░░░░░░░░░[
+    ╚░░░░░░░░░░░░░░░░░░░_  └░░░░░░░░░░░░░░░░░░░░░░░░
+    _╚░░░░░░░░░░░░░▒"^     _7░░░░░░░░░░░░░░░░░░░░░░Γ
+     _`╚░░░░░░░░╚²_          \░░░░░░░░░░░░░░░░░░░░Γ
+         ____                _`░░░░░░░░░░░░░░░Γ╙`
+                               _"φ░░░░░░░░░░╚_
+                                 _ `""²ⁿ""
+
+        ██╗         ██╗   ██╗    ██╗  ██╗    ██╗   ██╗
+        ██║         ██║   ██║    ╚██╗██╔╝    ╚██╗ ██╔╝
+        ██║         ██║   ██║     ╚███╔╝      ╚████╔╝ 
+        ██║         ██║   ██║     ██╔██╗       ╚██╔╝  
+        ███████╗    ╚██████╔╝    ██╔╝ ██╗       ██║   
+        ╚══════╝     ╚═════╝     ╚═╝  ╚═╝       ╚═╝   
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -9,7 +49,6 @@ import "./interfaces/ITransferExecutor.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./lib/LibTransfer.sol";
-import "hardhat/console.sol";
 
 abstract contract TransferExecutor is Initializable, OwnableUpgradeable, ITransferExecutor {
     using LibTransfer for address;
@@ -42,18 +81,11 @@ abstract contract TransferExecutor is Initializable, OwnableUpgradeable, ITransf
             (address token) = abi.decode(asset.assetType.data, (address));
             IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS]).erc20safeTransferFrom(IERC20Upgradeable(token), from, to, asset.value);
         } else if (asset.assetType.assetClass == LibAsset.ERC721_ASSET_CLASS) {
-            console.log('Transfering  nft');
             (address token, uint tokenId) = abi.decode(asset.assetType.data, (address, uint256));
-            console.log(token);
-            console.log(tokenId);
             require(asset.value == 1, "erc721 value error");
-            console.log(asset.value);
-            console.log("Should be one nft");
             INftTransferProxy(proxies[LibAsset.ERC721_ASSET_CLASS]).erc721safeTransferFrom(IERC721Upgradeable(token), from, to, tokenId);
         } else if (asset.assetType.assetClass == LibAsset.ERC1155_ASSET_CLASS) {
             (address token, uint tokenId) = abi.decode(asset.assetType.data, (address, uint256));
-            console.log('Trying to transfer');
-            console.log(asset.value);
             INftTransferProxy(proxies[LibAsset.ERC1155_ASSET_CLASS]).erc1155safeTransferFrom(IERC1155Upgradeable(token), from, to, tokenId, asset.value, "");
         } else {
             ITransferProxy(proxies[asset.assetType.assetClass]).transfer(asset, from, to);

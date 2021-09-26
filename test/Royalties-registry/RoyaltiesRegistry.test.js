@@ -1,8 +1,6 @@
-const { expect, util } = require('chai');
+const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
-const keccak256 = require('keccak256');
-const { BN, constants, expectRevert } = require('@openzeppelin/test-helpers');
-// const { ZERO_ADDRESS } = constants;
+const { expectRevert } = require('@openzeppelin/test-helpers');
 
 describe ('RoyaltiesRegistry', function(){ 
     let erc721TokenId1 = 0;
