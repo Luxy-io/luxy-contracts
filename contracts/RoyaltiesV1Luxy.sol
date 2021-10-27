@@ -42,9 +42,11 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./LibPart.sol";
+import "./tokens/ERC2981/IERC2981.sol";
+import "./exchange/lib/LibBP.sol";
 
-abstract contract RoyaltiesV1Luxy is Initializable {
-
+abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
+    using LibBP for uint256;
     event RoyaltiesSet(uint256 tokenId, LibPart.Part[] royalties);
     event RoyaltieAccountUpdate(
         uint256 tokenId,
@@ -62,11 +64,30 @@ abstract contract RoyaltiesV1Luxy is Initializable {
 
     function getRoyalties(uint256 id)
         public
-        virtual
         view
+        virtual
         returns (LibPart.Part[] memory)
     {
         return royalties[id];
+    }
+
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        require(royalties[_tokenId].length != 0, "Royalties not set yet");
+        require(
+            royalties[_tokenId].length == 1,
+            "Multiples Royalties is not supported by EIP2981, use LuxyRoyaltiesV1"
+        );
+        require(
+            royalties[_tokenId][0].value <= 9800,
+            "Royalties are too high (>98%)"
+        );
+        royaltyAmount = _salePrice.bp(royalties[_tokenId][0].value);
+        receiver = royalties[_tokenId][0].account;
     }
 
     function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)

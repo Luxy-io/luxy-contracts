@@ -42,8 +42,8 @@
 pragma solidity ^0.8.0;
 
 library LibTransfer {
-    function transferEth(address to, uint value) internal {
-        (bool success,) = to.call{ value: value }("");
+    function transferEth(address to, uint256 value) internal {
+        (bool success, ) = to.call{value: value}("");
         require(success, "transfer failed");
     }
 }

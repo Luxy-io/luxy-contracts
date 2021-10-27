@@ -51,6 +51,7 @@ abstract contract ERC1155BaseURI is ERC1155Upgradeable {
 
     // Base URI
     string private _baseURI;
+
     // event URI(string uri, uint256 id);
     /**
      * @dev Returns the base URI set via {_setBaseURI}. This will be
@@ -116,7 +117,13 @@ abstract contract ERC1155BaseURI is ERC1155Upgradeable {
         _baseURI = baseURI_;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155Upgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 

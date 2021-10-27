@@ -14,27 +14,27 @@ function Order(maker, makeAsset, taker, takeAsset, salt, start, end, dataType, d
 
 const Types = {
 	AssetType: [
-		{name: 'assetClass', type: 'bytes4'},
-		{name: 'data', type: 'bytes'}
+		{ name: 'assetClass', type: 'bytes4' },
+		{ name: 'data', type: 'bytes' }
 	],
 	Asset: [
-		{name: 'assetType', type: 'AssetType'},
-		{name: 'value', type: 'uint256'}
+		{ name: 'assetType', type: 'AssetType' },
+		{ name: 'value', type: 'uint256' }
 	],
 	Order: [
-		{name: 'maker', type: 'address'},
-		{name: 'makeAsset', type: 'Asset'},
-		{name: 'taker', type: 'address'},
-		{name: 'takeAsset', type: 'Asset'},
-		{name: 'salt', type: 'uint256'},
-		{name: 'start', type: 'uint256'},
-		{name: 'end', type: 'uint256'},
-		{name: 'dataType', type: 'bytes4'},
-		{name: 'data', type: 'bytes'},
+		{ name: 'maker', type: 'address' },
+		{ name: 'makeAsset', type: 'Asset' },
+		{ name: 'taker', type: 'address' },
+		{ name: 'takeAsset', type: 'Asset' },
+		{ name: 'salt', type: 'uint256' },
+		{ name: 'start', type: 'uint256' },
+		{ name: 'end', type: 'uint256' },
+		{ name: 'dataType', type: 'bytes4' },
+		{ name: 'data', type: 'bytes' },
 	]
 };
 
-async function sign(name,version,order, account, verifyingContract) {
+async function sign(name, version, order, account, verifyingContract) {
 	const chainId = Number(await web3.eth.getChainId());
 	const data = EIP712.createTypeData({
 		name: name,
@@ -45,10 +45,10 @@ async function sign(name,version,order, account, verifyingContract) {
 	return (await EIP712.signTypedData(web3, account, data)).sig;
 }
 
-async function domainSeparator(name,version,verifyingContract){
-    const chainId = Number(await web3.eth.getChainId());
-    const data = EIP712.domainSeparator(name, version, chainId, verifyingContract);
-    return data;
+async function domainSeparator(name, version, verifyingContract) {
+	const chainId = Number(await web3.eth.getChainId());
+	const data = EIP712.domainSeparator(name, version, chainId, verifyingContract);
+	return data;
 }
 
 module.exports = { AssetType, Asset, Order, sign, domainSeparator }

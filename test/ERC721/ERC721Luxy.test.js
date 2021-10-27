@@ -57,7 +57,7 @@ describe('ERC721Luxy', function () {
                 it('throws', async function () {
                     await expectRevert(
                         luxy.balanceOf(ZERO_ADDRESS), 'ERC721: balance query for the zero address',
-                    ); 
+                    );
                 });
             });
         });

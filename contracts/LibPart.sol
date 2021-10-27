@@ -42,7 +42,8 @@
 pragma solidity ^0.8.0;
 
 library LibPart {
-    bytes32 public constant TYPE_HASH = keccak256("Part(address account,uint96 value)");
+    bytes32 public constant TYPE_HASH =
+        keccak256("Part(address account,uint96 value)");
 
     struct Part {
         address payable account;

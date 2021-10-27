@@ -42,8 +42,14 @@
 pragma solidity ^0.8.0;
 import "./RoyaltiesV1Luxy.sol";
 import "./LibPart.sol";
+import "./tokens/ERC2981/IERC2981.sol";
+
 contract RoyaltiesV1LuxyTest is RoyaltiesV1Luxy {
-    function setRoyalties(uint256 _id, LibPart.Part[] memory _royalties) external {
+    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+
+    function setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
+        external
+    {
         _setRoyalties(_id, _royalties);
     }
 
@@ -53,5 +59,16 @@ contract RoyaltiesV1LuxyTest is RoyaltiesV1Luxy {
         address to
     ) external {
         _updateAccount(id, from, to);
+    }
+
+    function supportsInterface(bytes4 _interfaceId)
+        external
+        pure
+        override
+        returns (bool)
+    {
+        return
+            _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
+            _interfaceId == _INTERFACE_ID_ERC2981;
     }
 }

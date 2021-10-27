@@ -50,21 +50,34 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgra
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 
-
-abstract contract OrderValidator is Initializable, ContextUpgradeable, EIP712Upgradeable {
+abstract contract OrderValidator is
+    Initializable,
+    ContextUpgradeable,
+    EIP712Upgradeable
+{
     using LibSignature for bytes32;
     using AddressUpgradeable for address;
-    
-    bytes4 constant internal MAGICVALUE = 0x1626ba7e;
-    function __OrderValidator_init(string memory name, string memory version) internal initializer{
+
+    bytes4 internal constant MAGICVALUE = 0x1626ba7e;
+
+    function __OrderValidator_init(string memory name, string memory version)
+        internal
+        initializer
+    {
         __OrderValidator_init_unchained(name, version);
     }
-    function __OrderValidator_init_unchained(string memory name, string memory version) internal initializer {
+
+    function __OrderValidator_init_unchained(
+        string memory name,
+        string memory version
+    ) internal initializer {
         __EIP712_init_unchained(name, version);
-        
     }
 
-    function validate(LibOrder.Order memory order, bytes memory signature) internal view {
+    function validate(LibOrder.Order memory order, bytes memory signature)
+        internal
+        view
+    {
         if (order.salt == 0) {
             require(_msgSender() == order.maker, "maker is not tx sender");
         } else {
@@ -73,7 +86,10 @@ abstract contract OrderValidator is Initializable, ContextUpgradeable, EIP712Upg
                 if (_hashTypedDataV4(hash).recover(signature) != order.maker) {
                     if (order.maker.isContract()) {
                         require(
-                            IERC1271Upgradeable(order.maker).isValidSignature(_hashTypedDataV4(hash), signature) == MAGICVALUE,
+                            IERC1271Upgradeable(order.maker).isValidSignature(
+                                _hashTypedDataV4(hash),
+                                signature
+                            ) == MAGICVALUE,
                             "function selector was not recognized and there's no fallback function"
                         );
                     } else {

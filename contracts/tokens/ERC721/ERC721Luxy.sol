@@ -47,6 +47,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
 import "../ERC1271/ERC1271.sol";
+import "../ERC2981/IERC2981.sol";
 
 contract ERC721Luxy is
     ERC721URIStorageUpgradeable,
@@ -100,13 +101,18 @@ contract ERC721Luxy is
     function supportsInterface(bytes4 _interfaceId)
         public
         view
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+        override(
+            ERC721Upgradeable,
+            ERC721EnumerableUpgradeable,
+            IERC165Upgradeable
+        )
         returns (bool)
     {
         return
             _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
             _interfaceId == type(ERC721URIStorageUpgradeable).interfaceId ||
             _interfaceId == type(ERC721EnumerableUpgradeable).interfaceId ||
+            _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
     }
 
@@ -159,5 +165,6 @@ contract ERC721Luxy is
     {
         super._burn(tokenId);
     }
+
     uint256[100] private __gap;
 }

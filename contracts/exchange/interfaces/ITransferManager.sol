@@ -59,5 +59,5 @@ abstract contract ITransferManager is ITransferExecutor {
         LibFill.FillResult memory fill,
         LibOrder.Order memory leftOrder,
         LibOrder.Order memory rightOrder
-    ) internal virtual returns (uint totalMakeValue, uint totalTakeValue);
+    ) internal virtual returns (uint256 totalMakeValue, uint256 totalTakeValue);
 }

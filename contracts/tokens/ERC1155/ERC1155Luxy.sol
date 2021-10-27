@@ -60,7 +60,6 @@ contract ERC1155Luxy is
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
 
-
     function __ERC1155Luxy_init(
         string memory _name,
         string memory _symbol,
@@ -75,8 +74,8 @@ contract ERC1155Luxy is
         __RoyaltiesV1Luxy_init_unchained();
         _setBaseURI(_baseURI);
     }
-    function __ERC1155Luxy_init_unchained() internal initializer {
-    }
+
+    function __ERC1155Luxy_init_unchained() internal initializer {}
 
     function _setDefaultApproval(address operator, bool hasApproval) internal {
         defaultApprovals[operator] = hasApproval;
@@ -118,7 +117,7 @@ contract ERC1155Luxy is
         string memory tokenURI
     ) public {
         uint256 id = _tokenIds.current();
-        _mint(account, id, amount, '');
+        _mint(account, id, amount, "");
         _setRoyalties(id, royalties);
         _setTokenURI(id, tokenURI);
         _tokenIds.increment();
@@ -129,13 +128,12 @@ contract ERC1155Luxy is
         address from,
         address to,
         uint256 amount
-    )   public  {
-        uint balance = balanceOf(from, id);
+    ) public {
+        uint256 balance = balanceOf(from, id);
         if (balance != 0) {
             require(balance >= amount, "Insufficient balance");
             super.safeTransferFrom(from, to, id, amount, "");
         }
-
     }
 
     function updateAccount(
@@ -146,13 +144,14 @@ contract ERC1155Luxy is
         require(_msgSender() == _from, "not allowed");
         super._updateAccount(_id, _from, _to);
     }
-      /**
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 _interfaceId)
         public
         view
-        override(ERC1155Upgradeable, ERC1155BaseURI)
+        override(ERC1155Upgradeable, ERC1155BaseURI, IERC165Upgradeable)
         returns (bool)
     {
         return

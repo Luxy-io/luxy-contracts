@@ -5,9 +5,17 @@ import "../LuxyTransferManager.sol";
 import "../interfaces/ITransferExecutor.sol";
 import "../orderControl/OrderValidator.sol";
 import "../../Royalties-registry/IRoyaltiesProvider.sol";
-contract LuxyTransferManagerTest is LuxyTransferManager, TransferExecutor, OrderValidator {
 
-    function encode(LibOrderDataV1.DataV1 memory data) pure external returns (bytes memory) {
+contract LuxyTransferManagerTest is
+    LuxyTransferManager,
+    TransferExecutor,
+    OrderValidator
+{
+    function encode(LibOrderDataV1.DataV1 memory data)
+        external
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(data);
     }
 
@@ -17,25 +25,29 @@ contract LuxyTransferManagerTest is LuxyTransferManager, TransferExecutor, Order
         LibFill.FillResult memory fill,
         LibOrder.Order memory leftOrder,
         LibOrder.Order memory rightOrder
-    ) payable external {
+    ) external payable {
         doTransfers(makeMatch, takeMatch, fill, leftOrder, rightOrder);
     }
 
-    function checkFeeReceiver(address token) external view returns (address){
+    function checkFeeReceiver(address token) external view returns (address) {
         return getFeeReceiver(token);
     }
 
     function __TransferManager_init(
         INftTransferProxy _transferProxy,
         IERC20TransferProxy _erc20TransferProxy,
-        uint newProtocolFee,
+        uint256 newProtocolFee,
         address newCommunityWallet,
         IRoyaltiesProvider newRoyaltiesProvider
     ) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __TransferExecutor_init_unchained(_transferProxy, _erc20TransferProxy);
-        __LuxyTransferManager_init_unchained(newProtocolFee, newCommunityWallet,newRoyaltiesProvider);
-        __OrderValidator_init_unchained('Exchange','1');
+        __LuxyTransferManager_init_unchained(
+            newProtocolFee,
+            newCommunityWallet,
+            newRoyaltiesProvider
+        );
+        __OrderValidator_init_unchained("Exchange", "1");
     }
 }

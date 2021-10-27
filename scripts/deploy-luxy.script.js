@@ -14,9 +14,11 @@ const main = async () => {
     );
     transferProxy = await TransferProxy.deploy();
     erc20TransferProxy = await ERC20TransferProxy.deploy();
+    console.log('transferProxy', transferProxy.address);
+    console.log('ERC20TransferProxy', erc20TransferProxy.address);
     // Deploy contract proxy
     const ProxyLuxyFactory = await upgrades.deployProxy(
-        Luxy, 
+        Luxy,
         [transferProxy.address, erc20TransferProxy.address, 200, '0x39599fee90874b03b8768D325b3c42d7b91549f7', royaltiesRegistry.address],
         { initializer: '__LuxyCore_init' }
     );

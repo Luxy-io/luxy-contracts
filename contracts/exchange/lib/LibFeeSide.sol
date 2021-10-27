@@ -44,10 +44,17 @@ pragma solidity ^0.8.0;
 import "../assets/LibAsset.sol";
 
 library LibFeeSide {
+    enum FeeSide {
+        NONE,
+        MAKE,
+        TAKE
+    }
 
-    enum FeeSide {NONE, MAKE, TAKE}
-
-    function getFeeSide(bytes4 make, bytes4 take) internal pure returns (FeeSide) {
+    function getFeeSide(bytes4 make, bytes4 take)
+        internal
+        pure
+        returns (FeeSide)
+    {
         if (make == LibAsset.ETH_ASSET_CLASS) {
             return FeeSide.MAKE;
         }
