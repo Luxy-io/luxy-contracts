@@ -41,12 +41,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-library LibPart {
-    bytes32 public constant TYPE_HASH =
-        keccak256("Part(address account,uint96 value)");
+library LibTier {
+    bytes32 constant TIER_TYPEHASH =
+        keccak256("Tier(uint96 value,uint96 percentual)");
 
-    struct Part {
-        address payable account;
+    struct Tier {
         uint96 value;
+        uint96 percentual;
+    }
+}
+
+library LibNFTHolder {
+    bytes32 constant HOLDER_TYPEHASH =
+        keccak256("NFTHolder(address token,uint96 percentual)");
+
+    struct NFTHolder {
+        address token;
+        uint96 percentual;
     }
 }

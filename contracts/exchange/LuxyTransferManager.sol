@@ -43,6 +43,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./assets/LibAsset.sol";
 import "../tokens/ERC721/ERC721Luxy.sol";
@@ -55,6 +56,7 @@ import "./orderControl/LibOrderData.sol";
 import "./lib/LibBP.sol";
 import "./orderControl/LibOrderDataV1.sol";
 import "../Royalties-registry/IRoyaltiesProvider.sol";
+import "../LibsDiscount.sol";
 
 abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     using LibBP for uint256;
@@ -67,6 +69,15 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     mapping(address => uint256) public protocolFeeMake;
     mapping(address => uint256) public protocolFeeTake;
     mapping(address => bool) public protocolFeeSet;
+    address public tierToken;
+    LibTier.Tier[] public tiers;
+    LibNFTHolder.NFTHolder[] public nftHolders;
+    struct Fee {
+            uint256 maker;
+            uint256 taker;
+            address token;
+            address token2;
+        }
 
     function __LuxyTransferManager_init_unchained(
         uint256 newProtocolFee,
@@ -131,6 +142,65 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         feeReceivers[token] = wallet;
     }
 
+    function setNFTHolder(address token, uint96 percentual) external onlyOwner {
+        LibNFTHolder.NFTHolder memory newToken;
+        newToken.token = token;
+        newToken.percentual = percentual;
+        nftHolders.push(newToken);
+    }
+
+    function setTiers(LibTier.Tier[] memory _tiers) external onlyOwner{
+        require(tierToken != address(0), "You must first set address of the tierToken at setTierToken");
+        for (uint256 i = 0; i < _tiers.length; i++) {
+            require(
+                _tiers[i].value >= 0,
+                "Value can't be negative for tiers amount"
+            );
+            require(
+                _tiers[i].percentual >= 0,
+                "Percentual of Protocol Fee must be greater or equal to zero"
+            );
+            tiers.push(_tiers[i]);
+        }
+    }
+    function setTierToken(address _token) external onlyOwner {
+        require(
+            _token != address(0),
+            "Tier Token can't be address(0)"
+        );
+        tierToken = _token;
+    }
+
+    function getUserTier(address account) internal view returns (uint256) {
+        if(tierToken == address(0)) {
+            return 200;
+        }
+        IERC20Upgradeable token = IERC20Upgradeable(tierToken);
+        uint256 balance = token.balanceOf(account);
+        uint256 feepercentual = 200;
+        for (uint256 i = 0; i < tiers.length; i++) {
+
+            if (tiers[i].value <= balance) {
+                if(tiers[i].percentual <= feepercentual){
+                    feepercentual = tiers[i].percentual;
+                }
+            }
+        }
+        return feepercentual;
+    } 
+
+    function getHolderDiscount(address account) internal view returns (uint256) {
+        uint256 discount = 200;
+        for (uint256 i = 0; i < nftHolders.length; i++) {
+            if (IERC721Upgradeable(nftHolders[i].token).balanceOf(account) > 0) {
+                if(nftHolders[i].percentual > discount){
+                    discount = nftHolders[i].percentual;
+                }
+            }
+        }
+        return discount;
+    }
+
     function getFeeReceiver(address token) internal view returns (address) {
         address wallet = feeReceivers[token];
         if (wallet != address(0)) {
@@ -166,6 +236,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             totalMakeValue = doTransfersWithFees(
                 fill.makeValue,
                 leftOrder.maker,
+                rightOrder.maker,
                 rightOrderData,
                 makeMatch,
                 takeMatch,
@@ -182,6 +253,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             totalTakeValue = doTransfersWithFees(
                 fill.takeValue,
                 rightOrder.maker,
+                leftOrder.maker,
                 leftOrderData,
                 takeMatch,
                 makeMatch,
@@ -215,6 +287,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     function doTransfersWithFees(
         uint256 amount,
         address from,
+        address to,
         LibOrderDataV1.DataV1 memory dataNft,
         LibAsset.AssetType memory matchCalculate,
         LibAsset.AssetType memory matchNft,
@@ -224,6 +297,8 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         bool isEspecialFee;
         (totalAmount, specialFee, isEspecialFee) = calculateTotalAmount(
             amount,
+            from,
+            to,
             protocolFee,
             matchNft,
             matchCalculate,
@@ -414,6 +489,8 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
 
     function calculateTotalAmount(
         uint256 amount,
+        address from,
+        address to,
         uint256 feeOnTopBp,
         LibAsset.AssetType memory matchNft,
         LibAsset.AssetType memory matchCalculate,
@@ -427,71 +504,88 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             bool isSpecialFee
         )
     {
-        address token2 = address(0);
-        address token = abi.decode(matchNft.data, (address));
-        if (LibAsset.ETH_ASSET_CLASS != matchCalculate.assetClass) {
-            (token2) = abi.decode(matchCalculate.data, (address));
+        Fee memory discountFee;
+        discountFee.maker = getUserTier(from);
+        discountFee.taker = getUserTier(to);
+
+
+        if(transferDirection == TO_MAKER){
+            if(discountFee.maker > getHolderDiscount(to)){
+                discountFee.maker = getHolderDiscount(from);
+            }
+            if(discountFee.taker > getHolderDiscount(to)){
+                discountFee.taker = getHolderDiscount(to);
+            }
         }
-        if (protocolFeeSet[token] && protocolFeeSet[token2]) {
-            uint256 totalFeeToken = protocolFeeMake[token].add(
-                protocolFeeTake[token]
+        else{
+            discountFee.maker = getUserTier(to);
+            discountFee.taker = getUserTier(from);
+            if(discountFee.maker > getHolderDiscount(to)){
+                discountFee.maker = getHolderDiscount(to);
+            }
+            if(discountFee.taker > getHolderDiscount(from)){
+                discountFee.taker = getHolderDiscount(from);
+
+            }
+
+        }
+        discountFee.token2 = address(0);
+        discountFee.token = abi.decode(matchNft.data, (address));
+        if (LibAsset.ETH_ASSET_CLASS != matchCalculate.assetClass) {
+            (discountFee.token2) = abi.decode(matchCalculate.data, (address));
+        }
+        if (protocolFeeSet[discountFee.token] && protocolFeeSet[discountFee.token2]) {
+            uint256 totalFeeToken = protocolFeeMake[discountFee.token].add(
+                protocolFeeTake[discountFee.token]
             );
-            uint256 totalFeeToken2 = protocolFeeMake[token2].add(
-                protocolFeeTake[token2]
+            uint256 totalFeeToken2 = protocolFeeMake[discountFee.token2].add(
+                protocolFeeTake[discountFee.token2]
             );
+            
             if (totalFeeToken > totalFeeToken2) {
-                total = amount.add(
-                    amount.bp(
-                        transferDirection == TO_MAKER
-                            ? protocolFeeMake[token2]
-                            : protocolFeeTake[token2]
-                    )
-                );
-                specialFee[0] = (protocolFeeMake[token2]);
-                specialFee[1] = (protocolFeeTake[token2]);
-                protocolFeeSet[token2];
+                specialFee[0] = (protocolFeeMake[discountFee.token2]);
+                specialFee[1] = (protocolFeeTake[discountFee.token2]);
                 isSpecialFee = true;
             } else {
-                total = amount.add(
-                    amount.bp(
-                        transferDirection == TO_MAKER
-                            ? protocolFeeMake[token]
-                            : protocolFeeTake[token]
-                    )
-                );
-                specialFee[0] = (protocolFeeMake[token]);
-                specialFee[1] = (protocolFeeTake[token]);
-                protocolFeeSet[token];
+                specialFee[0] = (protocolFeeMake[discountFee.token]);
+                specialFee[1] = (protocolFeeTake[discountFee.token]);
                 isSpecialFee = true;
             }
-        } else if (protocolFeeSet[token]) {
-            total = amount.add(
-                amount.bp(
-                    transferDirection == TO_MAKER
-                        ? protocolFeeMake[token]
-                        : protocolFeeTake[token]
-                )
-            );
-            specialFee[0] = (protocolFeeMake[token]);
-            specialFee[1] = (protocolFeeTake[token]);
-            protocolFeeSet[token];
+        } else if (protocolFeeSet[discountFee.token]) {
+            specialFee[0] = (protocolFeeMake[discountFee.token]);
+            specialFee[1] = (protocolFeeTake[discountFee.token]);
             isSpecialFee = true;
-        } else if (protocolFeeSet[token2]) {
-            total = amount.add(
-                amount.bp(
-                    transferDirection == TO_MAKER
-                        ? protocolFeeMake[token2]
-                        : protocolFeeTake[token2]
-                )
-            );
-            specialFee[0] = (protocolFeeMake[token2]);
-            specialFee[1] = (protocolFeeTake[token2]);
-            protocolFeeSet[token2];
+        } else if (protocolFeeSet[discountFee.token2]) {
+            specialFee[0] = (protocolFeeMake[discountFee.token2]);
+            specialFee[1] = (protocolFeeTake[discountFee.token2]);
             isSpecialFee = true;
         }
 
-        if (!protocolFeeSet[token]) {
+
+        if (!isSpecialFee) {
+            if(discountFee.maker < feeOnTopBp || discountFee.taker < feeOnTopBp){
+                isSpecialFee = true;
+                specialFee[0] = (discountFee.maker);
+                specialFee[1] = (discountFee.taker);
+                
+
+            }
             total = amount.add(amount.bp(feeOnTopBp));
+        }
+        else{
+            if(specialFee[0] > discountFee.maker){
+                specialFee[0] = discountFee.maker;
+            }
+            if(specialFee[1] > discountFee.taker){
+                specialFee[1] = discountFee.taker;
+            }
+            total = amount.add(
+                    amount.bp(
+                        transferDirection == TO_MAKER
+                            ? specialFee[0]
+                            : specialFee[1]
+                    )
+                );
         }
     }
 
