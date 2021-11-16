@@ -148,6 +148,15 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         newToken.percentual = percentual;
         nftHolders.push(newToken);
     }
+    function removeNFTHolder(address token) external onlyOwner {
+        for(uint256 i = 0; i < nftHolders.length; i++){
+            if(nftHolders[i].token == token){
+                delete nftHolders[i];
+                break;
+            }
+        }
+    }
+        
 
     function setTiers(LibTier.Tier[] memory _tiers) external onlyOwner{
         require(tierToken != address(0), "You must first set address of the tierToken at setTierToken");
@@ -191,10 +200,13 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
 
     function getHolderDiscount(address account) internal view returns (uint256) {
         uint256 discount = 200;
+
         for (uint256 i = 0; i < nftHolders.length; i++) {
-            if (IERC721Upgradeable(nftHolders[i].token).balanceOf(account) > 0) {
-                if(nftHolders[i].percentual > discount){
-                    discount = nftHolders[i].percentual;
+            if(nftHolders[i].token != address(0)){
+                if (IERC721Upgradeable(nftHolders[i].token).balanceOf(account) > 0) {
+                    if(nftHolders[i].percentual > discount){
+                        discount = nftHolders[i].percentual;
+                    }
                 }
             }
         }
