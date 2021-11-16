@@ -212,9 +212,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         for (uint256 i = 0; i < nftHolders.length; i++) {
             if(nftHolders[i].token != address(0)){
                 if (IERC721Upgradeable(nftHolders[i].token).balanceOf(account) > 0) {
-                    if(nftHolders[i].percentual > discount){
-                        discount = nftHolders[i].percentual;
-                    }
+                    discount = nftHolders[i].percentual;
                 }
             }
         }
