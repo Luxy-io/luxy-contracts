@@ -143,10 +143,18 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     }
 
     function setNFTHolder(address token, uint96 percentual) external onlyOwner {
-        LibNFTHolder.NFTHolder memory newToken;
-        newToken.token = token;
-        newToken.percentual = percentual;
-        nftHolders.push(newToken);
+        if(token != address(0)){
+            for (uint256 i = 0; i < nftHolders.length; i++) {
+                if(nftHolders[i].token == token){
+                    nftHolders[i].percentual = percentual;
+                    return;
+                }
+            }
+            LibNFTHolder.NFTHolder memory newToken;
+            newToken.token = token;
+            newToken.percentual = percentual;
+            nftHolders.push(newToken);
+        }
     }
     function removeNFTHolder(address token) external onlyOwner {
         for(uint256 i = 0; i < nftHolders.length; i++){
@@ -522,7 +530,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
 
 
         if(transferDirection == TO_MAKER){
-            if(discountFee.maker > getHolderDiscount(to)){
+            if(discountFee.maker > getHolderDiscount(from)){
                 discountFee.maker = getHolderDiscount(from);
             }
             if(discountFee.taker > getHolderDiscount(to)){
@@ -579,10 +587,18 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
                 isSpecialFee = true;
                 specialFee[0] = (discountFee.maker);
                 specialFee[1] = (discountFee.taker);
-                
+                total = amount.add(
+                    amount.bp(
+                        transferDirection == TO_MAKER
+                            ? specialFee[0]
+                            : specialFee[1]
+                    )
+                );
 
             }
-            total = amount.add(amount.bp(feeOnTopBp));
+            else{
+                total = amount.add(amount.bp(feeOnTopBp));
+            }
         }
         else{
             if(specialFee[0] > discountFee.maker){
