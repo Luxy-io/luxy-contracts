@@ -498,6 +498,116 @@ describe('LuxyExchange tests', function () {
 
     });
 
+    context("Exchange with NFTHolders discount", () => {
+        it("Checking NFTHOlder discount -- maker side", async () =>{
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await luxy721.mint(account1.address, 'TERERE', []);
+            await testing.setNFTHolder(luxy721.address, 0);
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
+            const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 300, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-204, 200]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("4");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
+            
+
+        })
+        it("Checking NFTHOlder discount -- taker side", async () =>{
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await luxy721.mint(account2.address, 'TERERE', []);
+            await testing.setNFTHolder(luxy721.address, 0);
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
+            const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 300, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-200, 196]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("4");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
+            
+
+        })
+    })
+
+    context("Exchange with NFTHolders discount", () => { 
+        it("Revert must set tier token first", async () => {
+            await expectRevert(
+                            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]),
+                            "You must first set address of the tierToken at setTierToken"
+                            );
+
+        })
+        it("Checking Tiers discount -- maker side", async () =>{
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
+            await t1.mint(account1.address, 100);
+            await testing.setTierToken(t1.address);
+            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 300, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-204, 197]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("7");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
+
+         })
+         it("Checking Tiers discount -- taker side", async () =>{
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
+            await t1.mint(account2.address, 10000);
+            await testing.setTierToken(t1.address);
+            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 300, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-202, 196]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("6");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
+
+         })
+         it("Checking Tiers discount -- both sides", async () =>{
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
+            await t1.mint(account2.address, 10000);
+            await t1.mint(account1.address, 100000);
+            await testing.setTierToken(t1.address);
+            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 300, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-202, 200]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("2");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
+
+         })
+
+    })
+
     function encDataV1(tuple) {
         return luxyTransferManager.encode(tuple);
     }
