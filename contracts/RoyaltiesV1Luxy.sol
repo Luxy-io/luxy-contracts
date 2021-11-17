@@ -58,7 +58,7 @@ abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
 
     function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
 
-    function __RoyaltiesV1Luxy_init() public initializer {
+    function __RoyaltiesV1Luxy_init() external initializer {
         __RoyaltiesV1Luxy_init_unchained();
     }
 
