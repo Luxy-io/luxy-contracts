@@ -109,6 +109,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         external
         onlyOwner
     {
+        require(newDefaultFeeReceiver != address(0), 'Default receiving address must be different than 0');
         defaultFeeReceiver = newDefaultFeeReceiver;
     }
 
@@ -143,7 +144,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
     }
 
     function setNFTHolder(address token, uint96 percentual) external onlyOwner {
-        if(token != address(0)){
+           require(token != address(0), 'NFT contract address for holder must be different than 0');
             for (uint256 i = 0; i < nftHolders.length; i++) {
                 if(nftHolders[i].token == token){
                     nftHolders[i].percentual = percentual;
@@ -154,7 +155,6 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             newToken.token = token;
             newToken.percentual = percentual;
             nftHolders.push(newToken);
-        }
     }
     function removeNFTHolder(address token) external onlyOwner {
         for(uint256 i = 0; i < nftHolders.length; i++){
