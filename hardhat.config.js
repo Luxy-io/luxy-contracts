@@ -41,43 +41,48 @@ module.exports = {
     goerli: {
       url:
         process.env.GOERLI_ENDPOINT,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     },
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
       gasPrice: 80000000000,
       blockGasLimit: 22450000,
     },
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
       gasPrice: 80000000000,
       blockGasLimit: 22450000,
     },
     kovan: {
       url:
         process.env.KOVAN_ENDPOINT,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     },
     bsc_testnet: {
       url: process.env.BSC_TESTNET_ENDPOINT,
       chainId: 97,
       gasPrice: 20000000000,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     },
     bsc_mainnet: {
       url: process.env.BSC_ENDPOINT,
       chainId: 56,
       gasPrice: 20000000000,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     },
     mainnet: {
       url: process.env.MAINNET_ENDPOINT,
-      accounts: [process.env.DEPLOY_ACCOUNT_PRIVATE_KEY],
-    }
+      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+    },
+    polygon: {
+      url: process.env.POLYGON_ENDPOINT,
+      accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
+      gasPrice: 80000000000,
+    },
   },
   etherscan: {
     apiKey: process.env.POLYGONSCAN_KEY,
