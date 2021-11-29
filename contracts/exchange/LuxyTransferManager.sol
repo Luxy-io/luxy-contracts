@@ -168,6 +168,9 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
 
     function setTiers(LibTier.Tier[] memory _tiers) external onlyOwner{
         require(tierToken != address(0), "You must first set address of the tierToken at setTierToken");
+        for(uint256 i = 0; i < tiers.length; i++){
+            delete tiers[i];
+        }
         for (uint256 i = 0; i < _tiers.length; i++) {
             require(
                 _tiers[i].value >= 0,
@@ -188,7 +191,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         tierToken = _token;
     }
 
-    function getUserTier(address account) internal view returns (uint256) {
+    function getUserTier(address account) public view returns (uint256) {
         if(tierToken == address(0)) {
             return 200;
         }
@@ -206,7 +209,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         return feepercentual;
     } 
 
-    function getHolderDiscount(address account) internal view returns (uint256) {
+    function getHolderDiscount(address account) public view returns (uint256) {
         uint256 discount = 200;
 
         for (uint256 i = 0; i < nftHolders.length; i++) {

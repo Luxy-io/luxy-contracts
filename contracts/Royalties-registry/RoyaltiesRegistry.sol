@@ -103,14 +103,6 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         emit RoyaltiesSetForContract(token, royalties);
     }
 
-    function setRoyaltiesByTokenAndTokenId(
-        address token,
-        uint256 tokenId,
-        LibPart.Part[] memory royalties
-    ) external {
-        checkOwner(token);
-        setRoyaltiesCacheByTokenAndTokenId(token, tokenId, royalties);
-    }
 
     function getRoyaltiesByToken(address token)
         external
