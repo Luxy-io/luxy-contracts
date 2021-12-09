@@ -11,6 +11,8 @@ describe('TransferExecutor', function () {
     beforeEach(async () => {
 
         accounts = await ethers.provider.listAccounts();
+        protocol=accounts[9];
+        burning=accounts[10];
         prov = ethers.getDefaultProvider();
         [owner, spender, holder] = await ethers.getSigners();
         const TransferProxyTest = await ethers.getContractFactory('TransferProxyTest');
@@ -28,12 +30,17 @@ describe('TransferExecutor', function () {
             ['SuperThom', 'THOM'],
             { initializer: '__TestERC20_init' }
         );
+        luxy = await upgrades.deployProxy(
+            TestERC20,
+            ['Luxy', 'Luxy'],
+            { initializer: '__TestERC20_init' }
+        );
         erc721Token = await TestERC721.deploy();
         erc721DepToken = await TestERC721Dep.deploy();
         erc1155Token = await TestERC1155.deploy();
         testing = await upgrades.deployProxy(
             TransferExecutorTest,
-            [transferProxy.address, erc20TransferProxy.address],
+            [transferProxy.address, erc20TransferProxy.address,protocol,burning,luxy.address,10],
             { initializer: '__TransferExecutorTest_init' }
         );
         await testing.deployed();
