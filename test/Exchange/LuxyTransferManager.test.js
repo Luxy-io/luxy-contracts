@@ -14,6 +14,7 @@ describe('LuxyTransferManager:doTransferTest()', function () {
         accounts = await ethers.provider.listAccounts();
         community = accounts[8];
         protocol = accounts[9];
+        burning= accounts[10];
         [account0, account1, account2, account3, owner, owner2, owner3, owner4] = await ethers.getSigners();
         const TransferProxyTest = await ethers.getContractFactory('TransferProxyTest');
         const ERC20TransferProxyTest = await ethers.getContractFactory('ERC20TransferProxyTest');
@@ -67,6 +68,12 @@ describe('LuxyTransferManager:doTransferTest()', function () {
             { initializer: '__TestERC20_init' }
         );
         await t2.deployed();
+        t3 = await upgrades.deployProxy(
+            TestERC20,
+            ['Luxy', 'Luxy'],
+            { initializer: '__TestERC20_init' }
+        );
+        await t3.deployed();
         erc721Token = await upgrades.deployProxy(
             TestERC721,
             ['SuperNina', 'NINA'],
@@ -82,7 +89,7 @@ describe('LuxyTransferManager:doTransferTest()', function () {
         await erc1155Token.deployed();
         testing = await upgrades.deployProxy(
             LuxyTransferManager,
-            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address],
+            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address,protocol,burning,t3.address,10],
             { initializer: '__TransferManager_init' }
         );
         await testing.deployed();

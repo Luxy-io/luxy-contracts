@@ -56,18 +56,57 @@ abstract contract TransferExecutor is
     ITransferExecutor
 {
     using LibTransfer for address;
+    using SafeMathUpgradeable for uint256;
+    address public feeWallet;
+    address public burningWallet;
+    address luxyAddress;
+    uint256 public burningPercent;
 
     mapping(bytes4 => address) proxies;
 
     event ProxyChange(bytes4 indexed assetType, address proxy);
 
+    bool burnMode;
+    bytes4 private constant PROTOCOL = bytes4(keccak256("PROTOCOL"));
+
     function __TransferExecutor_init_unchained(
         INftTransferProxy transferProxy,
-        IERC20TransferProxy erc20TransferProxy
+        IERC20TransferProxy erc20TransferProxy,
+        address _feeWallet,
+        address _burningWallet,
+        address _luxyAddress,
+        uint256 _burningPercent
     ) internal {
         proxies[LibAsset.ERC20_ASSET_CLASS] = address(erc20TransferProxy);
         proxies[LibAsset.ERC721_ASSET_CLASS] = address(transferProxy);
         proxies[LibAsset.ERC1155_ASSET_CLASS] = address(transferProxy);
+        feeWallet = _feeWallet;
+        burningWallet = _burningWallet;
+        luxyAddress = _luxyAddress;
+        burningPercent = _burningPercent;
+        burnMode = false;
+    }
+
+    function setBurnMode(bool _burnMode) external onlyOwner {
+        burnMode = _burnMode;
+    }
+
+    function setLuxyAddress(address _luxyAddress) external onlyOwner {
+        luxyAddress = _luxyAddress;
+    }
+
+    function setBurningPercent(uint256 _burningPercent) external onlyOwner {
+        require(_burningPercent <= 100);
+        require(_burningPercent > 0);
+        burningPercent = _burningPercent;
+    }
+
+    function setFeeWallet(address _feeWallet) external onlyOwner {
+        feeWallet = _feeWallet;
+    }
+
+    function setBurningWallet(address _burningWallet) external onlyOwner {
+        burningWallet = _burningWallet;
     }
 
     function setTransferProxy(bytes4 assetType, address proxy)
@@ -86,16 +125,56 @@ abstract contract TransferExecutor is
         bytes4 transferType
     ) internal override {
         if (asset.assetType.assetClass == LibAsset.ETH_ASSET_CLASS) {
-            to.transferEth(asset.value);
+            if (transferType == PROTOCOL && burnMode == true) {
+                uint256 amountBurn = asset.value.mul(burningPercent).div(100);
+                uint256 amountFee = asset.value.sub(amountBurn);
+                if (amountBurn > 0) {
+                    burningWallet.transferEth(amountBurn);
+                }
+                feeWallet.transferEth(amountFee);
+            } else {
+                to.transferEth(asset.value);
+            }
         } else if (asset.assetType.assetClass == LibAsset.ERC20_ASSET_CLASS) {
             address token = abi.decode(asset.assetType.data, (address));
-            IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS])
-                .erc20safeTransferFrom(
-                    IERC20Upgradeable(token),
-                    from,
-                    to,
-                    asset.value
-                );
+            if (transferType == PROTOCOL && burnMode == true) {
+                uint256 amountBurn = asset.value.mul(burningPercent).div(100);
+                uint256 amountFee = asset.value.sub(amountBurn);
+                if (token == luxyAddress) {
+                    IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS])
+                        .erc20safeTransferFrom(
+                            IERC20Upgradeable(token),
+                            from,
+                            burningWallet,
+                            asset.value
+                        );
+                } else {
+                    IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS])
+                        .erc20safeTransferFrom(
+                            IERC20Upgradeable(token),
+                            from,
+                            feeWallet,
+                            amountFee
+                        );
+                    if (amountBurn > 0) {
+                        IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS])
+                            .erc20safeTransferFrom(
+                                IERC20Upgradeable(token),
+                                from,
+                                burningWallet,
+                                amountBurn
+                            );
+                    }
+                }
+            } else {
+                IERC20TransferProxy(proxies[LibAsset.ERC20_ASSET_CLASS])
+                    .erc20safeTransferFrom(
+                        IERC20Upgradeable(token),
+                        from,
+                        to,
+                        asset.value
+                    );
+            }
         } else if (asset.assetType.assetClass == LibAsset.ERC721_ASSET_CLASS) {
             (address token, uint256 tokenId) = abi.decode(
                 asset.assetType.data,

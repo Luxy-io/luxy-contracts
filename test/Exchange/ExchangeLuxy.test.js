@@ -16,6 +16,8 @@ describe('LuxyExchange tests', function () {
         accounts = await ethers.provider.listAccounts();
         community = accounts[8];
         protocol = accounts[9];
+        burning = accounts[10];
+        feeWallet = accounts[11];
         [account0, account1, account2, account3, owner, owner2, owner3, owner4] = await ethers.getSigners();
         const TransferProxy = await ethers.getContractFactory('TransferProxy');
         const ERC20TransferProxy = await ethers.getContractFactory('ERC20TransferProxy');
@@ -51,7 +53,6 @@ describe('LuxyExchange tests', function () {
         await luxy1155.deployed();
         // royaltiesRegistry = await TestRoyaltiesRegistry.new();
         transferProxy = await TransferProxy.deploy();
-
         erc20TransferProxy = await ERC20TransferProxy.deploy();
         // erc20Token = await TestERC20.deploy();
         luxy721 = await upgrades.deployProxy(
@@ -73,6 +74,12 @@ describe('LuxyExchange tests', function () {
             { initializer: '__TestERC20_init' }
         );
         await t2.deployed();
+        t3 = await upgrades.deployProxy(
+            TestERC20,
+            ['Luxy', 'Luxy'],
+            { initializer: '__TestERC20_init' }
+        );
+        await t2.deployed();
         erc721Token = await upgrades.deployProxy(
             TestERC721,
             ['SuperNina', 'NINA'],
@@ -88,14 +95,13 @@ describe('LuxyExchange tests', function () {
         await erc1155Token.deployed();
         luxyTransferManager = await upgrades.deployProxy(
             LuxyTransferManager,
-            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address],
+            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address, feeWallet, burning, t3.address, 10],
             { initializer: '__TransferManager_init' }
         );
         await luxyTransferManager.deployed();
-
         testing = await upgrades.deployProxy(
             LuxyExchange,
-            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address],
+            [transferProxy.address, erc20TransferProxy.address, 200, community, royaltiesRegistry.address, feeWallet, burning, t3.address, 10],
             { initializer: '__LuxyCore_init' }
         );
         await testing.deployed();
@@ -225,7 +231,7 @@ describe('LuxyExchange tests', function () {
             expect(await t2.balanceOf(account2.address)).to.equal(3);
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1);
-            expect(await t2.balanceOf(community)).to.equal(4);
+            // expect(await t2.balanceOf(community)).to.equal(4);
         })
 
         async function prepare721DV1_20rders(t2Amount = 105) {
@@ -303,7 +309,7 @@ describe('LuxyExchange tests', function () {
             return { left, right }
         }
 
-        it("From ETH(DataV1) to ERC720(RoyV1, DataV1) Protocol, Royalties", async () => {
+        it("From ETH(DataV1) to ERC721(RoyV1, DataV1) Protocol, Royalties", async () => {
             await luxy721.mint(account1.address, 'TERERE', []);
             await luxy721.connect(account1).setApprovalForAll(transferProxy.address, true);
 
@@ -322,7 +328,7 @@ describe('LuxyExchange tests', function () {
             expect(await luxy721.balanceOf(account2.address)).to.equal(1);
         })
 
-        it("From ETH(DataV1) to ERC720(DataV1) Protocol, no Royalties", async () => {
+        it("From ETH(DataV1) to ERC721(DataV1) Protocol, no Royalties", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
 
@@ -499,7 +505,7 @@ describe('LuxyExchange tests', function () {
     });
 
     context("Exchange with NFTHolders discount", () => {
-        it("Checking NFTHOlder discount -- maker side", async () =>{
+        it("Checking NFTHOlder discount -- maker side", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             await luxy721.mint(account1.address, 'TERERE', []);
@@ -515,10 +521,10 @@ describe('LuxyExchange tests', function () {
             expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("4");
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
-            
+
 
         })
-        it("Checking NFTHOlder discount -- taker side", async () =>{
+        it("Checking NFTHOlder discount -- taker side", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             await luxy721.mint(account2.address, 'TERERE', []);
@@ -534,26 +540,26 @@ describe('LuxyExchange tests', function () {
             expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("4");
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
-            
+
 
         })
     })
 
-    context("Exchange with NFTHolders discount", () => { 
+    context("Exchange with NFTHolders discount", () => {
         it("Revert must set tier token first", async () => {
             await expectRevert(
-                            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]),
-                            "You must first set address of the tierToken at setTierToken"
-                            );
+                testing.setTiers([[100, 150], [1000, 120], [10000, 100], [100000, 0]]),
+                "You must first set address of the tierToken at setTierToken"
+            );
 
         })
-        it("Checking Tiers discount -- maker side", async () =>{
+        it("Checking Tiers discount -- maker side", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
             await t1.mint(account1.address, 100);
             await testing.setTierToken(t1.address);
-            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            testing.setTiers([[100, 150], [1000, 120], [10000, 100], [100000, 0]]);
             const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
             const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
             let signatureRight = await getSignature(right, account1.address);
@@ -565,14 +571,14 @@ describe('LuxyExchange tests', function () {
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
 
-         })
-         it("Checking Tiers discount -- taker side", async () =>{
+        })
+        it("Checking Tiers discount -- taker side", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
             await t1.mint(account2.address, 10000);
             await testing.setTierToken(t1.address);
-            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            testing.setTiers([[100, 150], [1000, 120], [10000, 100], [100000, 0]]);
             const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
             const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
             let signatureRight = await getSignature(right, account1.address);
@@ -584,15 +590,15 @@ describe('LuxyExchange tests', function () {
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
 
-         })
-         it("Checking Tiers discount -- both sides", async () =>{
+        })
+        it("Checking Tiers discount -- both sides", async () => {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             await royaltiesRegistry.setRoyaltiesByToken(erc721Token.address, []); //set royalties by token
             await t1.mint(account2.address, 10000);
             await t1.mint(account1.address, 100000);
             await testing.setTierToken(t1.address);
-            testing.setTiers([[100,150],[1000,120],[10000,100],[100000,0]]);
+            testing.setTiers([[100, 150], [1000, 120], [10000, 100], [100000, 0]]);
             const left = Order(account2.address, Asset(ETH, "0x", 200), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, "0xffffffff", "0x");
             const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 200), 1, 0, 0, "0xffffffff", "0x");
             let signatureRight = await getSignature(right, account1.address);
@@ -604,7 +610,159 @@ describe('LuxyExchange tests', function () {
             expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
             expect(await erc721Token.balanceOf(account2.address)).to.equal(1)
 
-         })
+        })
+
+    })
+    context("With burning active", () => {
+        beforeEach(async () => {
+            await testing.setBurnMode(true);
+
+        })
+        it("From ETH(DataV1) to ERC721(RoyV1, DataV1) Protocol, Royalties", async () => {
+            await luxy721.mint(account1.address, 'TERERE', []);
+            await luxy721.connect(account1).setApprovalForAll(transferProxy.address, true);
+            let encDataLeft = await encDataV1([[[account2.address, 10000]]]);
+            let encDataRight = await encDataV1([[[account1.address, 10000]]]);
+            await royaltiesRegistry.setRoyaltiesByToken(luxy721.address, [[owner.address, 300], [owner2.address, 400]]); //set royalties by token
+            const left = Order(account2.address, Asset(ETH, "0x", 2000), ZERO_ADDRESS, Asset(ERC721, enc(luxy721.address, 0), 1), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+            const right = Order(account1.address, Asset(ERC721, enc(luxy721.address, 0), 1), ZERO_ADDRESS, Asset(ETH, "0x", 2000), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            const beforeFeeWallet = new BN(await web3.eth.getBalance(feeWallet));
+            const beforeBurning = new BN(await web3.eth.getBalance(burning));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 3000, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1, owner, owner2], [-2040, 1820, 60, 80]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            const afterFeeWallet = new BN(await web3.eth.getBalance(feeWallet));
+            const afterBurning = new BN(await web3.eth.getBalance(burning));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("0");
+            expect(afterFeeWallet.sub(beforeFeeWallet).toString()).to.equal("72");
+            expect(afterBurning.sub(beforeBurning).toString()).to.equal("8");
+            expect(await luxy721.balanceOf(account1.address)).to.equal(0);
+            expect(await luxy721.balanceOf(account2.address)).to.equal(1);
+        })
+
+        it("From ETH(DataV1) to ERC721(DataV1) Protocol, no Royalties", async () => {
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+
+            let encDataLeft = await encDataV1([[[account2.address, 10000]]]);
+            let encDataRight = await encDataV1([[[account1.address, 10000]]]);
+
+            const left = Order(account2.address, Asset(ETH, "0x", 2000), ZERO_ADDRESS, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 2000), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+            let signatureRight = await getSignature(right, account1.address);
+            const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
+            const beforeFeeWallet = new BN(await web3.eth.getBalance(feeWallet));
+            const beforeBurning = new BN(await web3.eth.getBalance(burning));
+            await expect(await testing.connect(account2).matchOrders(left, "0x", right, signatureRight, { value: 3000, gasPrice: 20 }))
+                .to.changeEtherBalances([account2, account1], [-2040, 1960]);
+            const afterProtocol = new BN(await web3.eth.getBalance(protocol));
+            const afterFeeWallet = new BN(await web3.eth.getBalance(feeWallet));
+            const afterBurning = new BN(await web3.eth.getBalance(burning));
+            expect(afterProtocol.sub(beforeProtocol).toString()).to.equal("0");
+            expect(afterFeeWallet.sub(beforeFeeWallet).toString()).to.equal("72");
+            expect(afterBurning.sub(beforeBurning).toString()).to.equal("8");
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(1);
+        })
+
+        it("From ERC20(DataV1) to ERC1155(RoyV1, DataV1) Protocol, Royalties ", async () => {
+            const { left, right } = await prepare20DV1_1155V1Orders()
+
+            await testing.connect(account2).matchOrders(left, await getSignature(left, account1.address), right, "0x");
+
+            expect(await testing.fills(await libOrder.hashKey(left))).to.equal(7);
+
+            expect(await t1.balanceOf(account1.address)).to.equal(1800);
+            expect(await t1.balanceOf(account2.address)).to.equal(8300);
+            expect(await t1.balanceOf(accounts[6])).to.equal(1000);
+            expect(await t1.balanceOf(accounts[7])).to.equal(500);
+            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(7);
+            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(3);
+            expect(await t1.balanceOf(feeWallet)).to.equal(360);
+            expect(await t1.balanceOf(burning)).to.equal(40);
+        })
+
+        async function prepare20DV1_1155V1Orders(t1Amount = 12000, t2Amount = 10) {
+            await t1.mint(account1.address, t1Amount);
+            await testERC1155_V1.mint(account2.address, erc1155TokenId1, [], t2Amount);
+            await t1.connect(account1).approve(erc20TransferProxy.address, 10000000);
+            await testERC1155_V1.connect(account2).setApprovalForAll(transferProxy.address, true);
+
+
+            let encDataLeft = await encDataV1([[[account1.address, 10000]]]);
+            let encDataRight = await encDataV1([[[account2.address, 10000]]]);
+
+            await royaltiesRegistry.setRoyaltiesByToken(testERC1155_V1.address, [[accounts[6], 1000], [accounts[7], 500]]); //set royalties by token
+            const left = Order(account1.address, Asset(ERC20, enc(t1.address), 10000), ZERO_ADDRESS, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+            const right = Order(account2.address, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), ZERO_ADDRESS, Asset(ERC20, enc(t1.address), 10000), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+            return { left, right }
+        }
+
+        it("From ERC1155(RoyV1, DataV1) to ERC20(DataV1):Protocol, Royalties ", async () => {
+            const { left, right } = await prepare1155V1_20DV1Orders()
+
+            await testing.connect(account1).matchOrders(left, await getSignature(left, account2.address), right, "0x");
+
+            expect(await testing.fills(await libOrder.hashKey(left))).to.equal(11040);
+
+            expect(await t1.balanceOf(account1.address)).to.equal(740);
+            expect(await t1.balanceOf(account2.address)).to.equal(9163);
+            expect(await t1.balanceOf(accounts[6])).to.equal(1104);
+            expect(await t1.balanceOf(accounts[7])).to.equal(552);
+            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(7);
+            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(3);
+            expect(await t1.balanceOf(feeWallet)).to.equal(397);
+            expect(await t1.balanceOf(burning)).to.equal(44);
+        })
+
+        async function prepare1155V1_20DV1Orders(t1Amount = 12000, t2Amount = 10, isFullBurning = false) {
+            await testERC1155_V1.mint(account2.address, erc1155TokenId1, [], t2Amount);
+            if (isFullBurning) {
+                await t3.mint(account1.address, t1Amount);
+            }
+            else {
+                await t1.mint(account1.address, t1Amount);
+            }
+            await testERC1155_V1.connect(account2).setApprovalForAll(transferProxy.address, true);
+            if (isFullBurning) {
+                await t3.connect(account1).approve(erc20TransferProxy.address, 10000000);
+            }
+            else {
+                await t1.connect(account1).approve(erc20TransferProxy.address, 10000000);
+            }
+
+            let encDataLeft = await encDataV1([[[account2.address, 10000]]]);
+            let encDataRight = await encDataV1([[[account1.address, 10000]]]);
+
+            await royaltiesRegistry.setRoyaltiesByToken(testERC1155_V1.address, [[accounts[6], 1000], [accounts[7], 500]]); //set royalties by token
+            if (isFullBurning) {
+                const left = Order(account2.address, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), ZERO_ADDRESS, Asset(ERC20, enc(t3.address), 11040), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+                const right = Order(account1.address, Asset(ERC20, enc(t3.address), 11040), ZERO_ADDRESS, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+                return { left, right }
+            }
+            const left = Order(account2.address, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), ZERO_ADDRESS, Asset(ERC20, enc(t1.address), 11040), 1, 0, 0, ORDER_DATA_V1, encDataLeft);
+            const right = Order(account1.address, Asset(ERC20, enc(t1.address), 11040), ZERO_ADDRESS, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), 7), 1, 0, 0, ORDER_DATA_V1, encDataRight);
+            return { left, right }
+        }
+
+        it("From ERC1155(RoyV1, DataV1) to ERC20FullBurn(DataV1):Protocol, Royalties ", async () => {
+            const { left, right } = await prepare1155V1_20DV1Orders(12000, 10, true)
+
+            await testing.connect(account1).matchOrders(left, await getSignature(left, account2.address), right, "0x");
+
+            expect(await testing.fills(await libOrder.hashKey(left))).to.equal(11040);
+
+            expect(await t3.balanceOf(account1.address)).to.equal(740);
+            expect(await t3.balanceOf(account2.address)).to.equal(9163);
+            expect(await t3.balanceOf(accounts[6])).to.equal(1104);
+            expect(await t3.balanceOf(accounts[7])).to.equal(552);
+            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(7);
+            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(3);
+            expect(await t3.balanceOf(feeWallet)).to.equal(0);
+            expect(await t3.balanceOf(burning)).to.equal(441);
+        })
 
     })
 
