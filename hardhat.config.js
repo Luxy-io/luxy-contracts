@@ -80,7 +80,7 @@ module.exports = {
     },
     polygon: {
       url: process.env.POLYGON_ENDPOINT,
-      accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.LUXY_MAINNET_MKT_PRIVATE],
       gasPrice: 80000000000,
     },
   },
