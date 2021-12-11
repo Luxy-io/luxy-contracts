@@ -30,6 +30,8 @@ const main = async () => {
     // Wait for campaign factory deploy success
     await ProxyLuxyFactory.deployed();
     await ProxyLuxyFactory.setBurnMode(true);
+    await ProxyLuxyFactory.setTierToken(process.env.LUXY_TOKEN);
+    await ProxyLuxyFactory.setTiers([['10000000000000000000000', 175], ['25000000000000000000000', 150], ['50000000000000000000000', 125], ['125000000000000000000000', 75], ['250000000000000000000000', 25]]);
     // Log the address
     console.log('ProxyLuxyFactory deployed at', ProxyLuxyFactory.address);
 };
