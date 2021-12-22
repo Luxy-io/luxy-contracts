@@ -159,6 +159,7 @@ contract ERC1155Luxy is
             _interfaceId == type(ERC1155BaseURI).interfaceId ||
             _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
             _interfaceId == type(OwnableUpgradeable).interfaceId ||
+            _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
     }
 
