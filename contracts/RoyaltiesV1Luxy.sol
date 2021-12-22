@@ -45,6 +45,7 @@ import "./LibPart.sol";
 import "./tokens/ERC2981/IERC2981.sol";
 import "./exchange/lib/LibBP.sol";
 
+//InterfaceID = 0x25292224
 abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
     using LibBP for uint256;
     event RoyaltiesSet(uint256 tokenId, LibPart.Part[] royalties);
@@ -89,6 +90,12 @@ abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
         royaltyAmount = _salePrice.bp(royalties[_tokenId][0].value);
         receiver = royalties[_tokenId][0].account;
     }
+
+
+    //Not deployed yet current InterfaceID is 0x25292224
+    // function calcRoyaltiesInterfaceId() external pure returns (bytes4) {
+    //     return type(RoyaltiesV1Luxy).interfaceId;
+    // }
 
     function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
         internal
