@@ -7,7 +7,7 @@ const main = async () => {
     );
 
     const LuxyPrivateFactory1155 = await ethers.getContractFactory(
-        'ERC1155LuxyPrivate',
+        'ERC1155LuxyPrivateFactory',
     );
     const LuxyFactory721 = await ethers.getContractFactory(
         'ERC721LuxyFactory',
