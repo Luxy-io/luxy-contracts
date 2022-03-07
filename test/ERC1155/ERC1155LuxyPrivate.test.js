@@ -18,8 +18,8 @@ describe('ERC1155Luxy', function () {
         );
         const _luxy = await upgrades.deployProxy(
             Luxy,
-            ["ERC1155LuxyPrivate", "LUXYPriv", "ipfs://"],
-            { initializer: '__ERC1155Luxy_init' }
+            ["ERC1155LuxyPrivate", "LUXYPriv", "ipfs://",[],true,0],
+            { initializer: '__ERC1155PrivateLuxy_init' }
         );
         await _luxy.deployed();
         luxy = _luxy;
@@ -81,7 +81,7 @@ describe('ERC1155Luxy', function () {
             it('transfering to new account', async function () {
                 await expectRevert(
                 luxy.connect(account1).mint(owner, 10, [{ account: owner, value: 10 }], "Thom"),
-                "Ownable: caller is not the owner"
+                "Sender must be an approved minter or owner"
                 );
 
             })

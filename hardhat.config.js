@@ -17,6 +17,21 @@ task('accounts', 'Prints the list of accounts', async () => {
   }
 });
 
+task("debug", "Check transaction info", async(taskArgs, hre) => {
+  const trace = await hre.network.provider.send("debug_traceTransaction", [
+    "insertTXID",
+    {
+      disableMemory: true,
+      disableStack: true,
+      disableStorage: true,
+    },
+  ]);
+  for (const ev of trace.structLogs) {
+    console.log(ev);
+  }
+}
+  );
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -46,7 +61,7 @@ module.exports = {
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.RINKEBY_PRIVATE_KEY],
       gasPrice: 80000000000,
       blockGasLimit: 22450000,
     },

@@ -22,9 +22,7 @@ describe("Tests For Luxy Royalties", function () {
       'RoyaltiesV1LuxyTest',
     );
     const _royalties = await upgrades.deployProxy(
-      RoyaltiesV1LuxyTest,
-      [],
-      { initializer: '__RoyaltiesV1Luxy_init' }
+      RoyaltiesV1LuxyTest
     );
 
     await _royalties.deployed();

@@ -17,7 +17,6 @@ contract TestERC1155Royalties is
         initializer
     {
         __Context_init_unchained();
-        __RoyaltiesV1Luxy_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained(uri_);
     }

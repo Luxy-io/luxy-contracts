@@ -35,7 +35,7 @@ describe('LuxyTransferManager:doTransferTest()', function () {
         );
         luxy1155 = await upgrades.deployProxy(
             Luxy1155,
-            ["ERC1155Luxy", "LUXY", ""],
+            ["ERC1155Luxy", "LUXY", "",false,0],
             { initializer: '__ERC1155Luxy_init' }
         );
 
@@ -51,7 +51,7 @@ describe('LuxyTransferManager:doTransferTest()', function () {
         // erc20Token = await TestERC20.deploy();
         luxy721 = await upgrades.deployProxy(
             Luxy721,
-            ["ERC721Luxy", "LUXY", ''],
+            ["ERC721Luxy", "LUXY", '', false,0],
             { initializer: '__ERC721Luxy_init' }
         );
         await luxy721.deployed();
