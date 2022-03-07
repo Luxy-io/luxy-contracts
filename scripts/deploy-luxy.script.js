@@ -20,7 +20,9 @@ const main = async () => {
     // Deploy contract proxy
     const ProxyLuxyFactory = await upgrades.deployProxy(
         Luxy,
-        [transferProxy.address, erc20TransferProxy.address, 200, '0x39599fee90874b03b8768D325b3c42d7b91549f7', royaltiesRegistry.address],
+        [transferProxy.address, erc20TransferProxy.address, 200, '0x39599fee90874b03b8768D325b3c42d7b91549f7', royaltiesRegistry.address
+            , "0x39599fee90874b03b8768D325b3c42d7b91549f7", "0x6BB1a0a01BF028F23CE488c67089fff3a60745de",
+            "0x1A02f96593E1f7Ca18edC743b50C3103Ecc19340", 10],
         { initializer: '__LuxyCore_init' }
     );
     console.log('Deploying contract');

@@ -61,7 +61,7 @@ module.exports = {
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.RINKEBY_PRIVATE_KEY],
       gasPrice: 80000000000,
       blockGasLimit: 22450000,
     },

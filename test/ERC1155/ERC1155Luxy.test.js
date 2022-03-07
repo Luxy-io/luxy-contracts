@@ -17,7 +17,7 @@ describe('ERC1155Luxy', function () {
         );
         const _luxy = await upgrades.deployProxy(
             Luxy,
-            ["ERC1155Luxy", "LUXY", ""],
+            ["ERC1155Luxy", "LUXY", "",false,0],
             { initializer: '__ERC1155Luxy_init' }
         );
         await _luxy.deployed();

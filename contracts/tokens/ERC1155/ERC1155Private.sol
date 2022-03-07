@@ -55,15 +55,21 @@ contract ERC1155LuxyPrivate is
 {
     string public name;
     string public symbol;
+    bool public isChangeable;
+    uint256 public maxSupply;
     mapping(address => bool) private defaultApprovals;
     event DefaultApproval(address indexed operator, bool hasApproval);
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
+    mapping(address => bool) private approvedMinters;
 
-    function __ERC1155Luxy_init(
+    function __ERC1155PrivateLuxy_init(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI
+        string memory _baseURI,
+        address[] memory _minters,
+        bool _isChangeable,
+        uint256 _maxSupply
     ) public initializer {
         name = _name;
         symbol = _symbol;
@@ -71,15 +77,43 @@ contract ERC1155LuxyPrivate is
         __ERC1155Burnable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
-        __RoyaltiesV1Luxy_init_unchained();
         _setBaseURI(_baseURI);
+        _setInitialMinters(_minters);
+        _setChangeable(_isChangeable);
+        _setMaxSupply(_maxSupply);
     }
 
-    function __ERC1155Luxy_init_unchained() internal initializer {}
+    function __ERC1155PrivateLuxy_init_unchained(string memory _baseURI, address[] memory _minters, bool _isChangeable, uint256 _maxSupply)
+        internal
+        initializer
+    {
+        _setBaseURI(_baseURI);
+        _setInitialMinters(_minters);
+        _setChangeable(_isChangeable);
+        _setMaxSupply(_maxSupply);
+    }
 
     function _setDefaultApproval(address operator, bool hasApproval) internal {
         defaultApprovals[operator] = hasApproval;
         emit DefaultApproval(operator, hasApproval);
+    }
+
+    function setApprovedMinter(address _minter, bool _approved)
+        external
+        onlyOwner
+    {
+        approvedMinters[_minter] = _approved;
+    }
+
+    function _isApprovedMinterorOwner(address minter)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        if (minter == owner()) return true;
+        require(minter != address(0));
+        return approvedMinters[minter];
     }
 
     function isApprovedForAll(address _owner, address _operator)
@@ -115,8 +149,15 @@ contract ERC1155LuxyPrivate is
         uint256 amount,
         LibPart.Part[] memory royalties,
         string memory tokenURI
-    ) public onlyOwner{
+    ) public {
+        require(
+            _isApprovedMinterorOwner(_msgSender()),
+            "Sender must be an approved minter or owner"
+        );
         uint256 id = _tokenIds.current();
+        if(maxSupply != 0){
+            require(id < maxSupply, "ERC721: minting above the total supply");
+        }
         _mint(account, id, amount, "");
         _setRoyalties(id, royalties);
         _setTokenURI(id, tokenURI);
@@ -146,6 +187,7 @@ contract ERC1155LuxyPrivate is
     }
 
     function setBaseURI(string memory _baseURI) external onlyOwner {
+        require(isChangeable, "Base URI is not changeable.");
         _setBaseURI(_baseURI);
     }
 
@@ -164,6 +206,32 @@ contract ERC1155LuxyPrivate is
             _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
             _interfaceId == type(OwnableUpgradeable).interfaceId ||
             super.supportsInterface(_interfaceId);
+    }
+
+    function _setMaxSupply(uint256 maxSupply_) internal virtual {
+        maxSupply = maxSupply_;
+    }
+
+    function getMaxSupply() public view returns (uint256) {
+        require(maxSupply > 0, "There is no MaxSupply for this collection.");
+        return maxSupply;
+    }
+
+    /**
+     * @dev Internal function to set changeability of BaseURI for NFT drops.
+     */
+    function _setInitialMinters(address[] memory minters) internal virtual {
+        //initializing base minters list
+        for (uint256 i = 0; i < minters.length; i++) {
+            approvedMinters[minters[i]] = true;
+        }
+    }
+
+    /**
+     * @dev Internal function to set changeability of BaseURI for NFT drops.
+     */
+    function _setChangeable(bool isChangeable_) internal virtual {
+        isChangeable = isChangeable_;
     }
 
     uint256[100] private __gap;

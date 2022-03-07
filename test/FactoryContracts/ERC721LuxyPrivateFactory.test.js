@@ -6,22 +6,22 @@ const ethSigUtil = require('eth-sig-util');
 const { ZERO_ADDRESS } = constants;
 
 
-describe('ERC721LuxyFactory', function () {
+describe('ERC721PrivateLuxyFactory', function () {
 
     beforeEach(async () => {
         [creator1, creator2, factoryOwner, minter1, minter2, minter3] = await ethers.getSigners();
         const LuxyFactory = await ethers.getContractFactory(
-            'ERC721LuxyFactory',
+            'ERC721LuxyPrivateFactory',
         );
         const _luxyFactory = await LuxyFactory.connect(factoryOwner).deploy();
         testing = _luxyFactory;
-        let tx = await testing.connect(creator1).createToken('Creation1', 'Cri1', '', false, 0, 231);
+        let tx = await testing.connect(creator1).createToken('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 231);
         tx_receipt = await tx.wait();
         for (let i = 0; i < tx_receipt.events.length; i++) {
             ev = tx_receipt.events[i];
             if (ev.event == "Create721LuxyContract") {
                 luxyCreator1address = ev.args.erc721;
-                const response = await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', false, 0, 231);
+                const response = await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 231);
                 console.log('contract address: ' + luxyCreator1address);
                 console.log(response);
                 const tokenArtifact = await artifacts.readArtifact("ERC721Luxy");
@@ -29,7 +29,6 @@ describe('ERC721LuxyFactory', function () {
 
             }
         }
-        // await creator1Contract.connect(creator1).__ERC721Luxy_init('Creation1', 'Cri1', '');
 
     });
     context('factory with minted tokens', function () {
@@ -40,10 +39,16 @@ describe('ERC721LuxyFactory', function () {
 
         describe('check factory contract', function () {
             it('should be equal to creator1 address', async function () {
-                expect(await (creator1Contract.address)).to.be.equal(await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', false, 0, 231));
+                expect(await (creator1Contract.address)).to.be.equal(await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 231));
             });
             it('should be equal to creator1 address', async function () {
                 expect(await (creator1Contract.owner())).to.be.equal(creator1.address);
+            });
+            it('should revert if not allowed minter', async function () {
+                await expectRevert(
+                    creator1Contract.connect(minter3).mint(minter1.address, "Thom", [{ account: factoryOwner.address, value: 10 }]),
+                    "Sender must be an approved minter or owner"
+                )
             });
         })
 

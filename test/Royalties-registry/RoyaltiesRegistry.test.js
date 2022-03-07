@@ -30,7 +30,7 @@ describe('RoyaltiesRegistry', function () {
 
         luxy721 = await upgrades.deployProxy(
             Luxy721,
-            ["ERC721Luxy", "LUXY", ''],
+            ["ERC721Luxy", "LUXY", '', false,0],
             { initializer: '__ERC721Luxy_init' }
         );
         await luxy721.deployed();
@@ -90,7 +90,7 @@ describe('RoyaltiesRegistry', function () {
             const Luxy721 = await ethers.getContractFactory('ERC721Luxy');
             externalLuxy = await upgrades.deployProxy(
                 Luxy721,
-                ['Owner', 'own', ''],
+                ['Owner', 'own', '', false,0],
                 { initializer: '__ERC721Luxy_init' }
             );
             await luxy721.mint(owner.address, 'TERERE', [[accounts[3], 5000], [accounts[4], 1801]]);  //set royalties by contract
@@ -105,7 +105,7 @@ describe('RoyaltiesRegistry', function () {
             const Luxy721 = await ethers.getContractFactory('ERC721Luxy');
             externalLuxy = await upgrades.deployProxy(
                 Luxy721,
-                ['Owner', 'own', ''],
+                ['Owner', 'own', '', false,0],
                 { initializer: '__ERC721Luxy_init' }
             );
             await externalLuxy.deployed();

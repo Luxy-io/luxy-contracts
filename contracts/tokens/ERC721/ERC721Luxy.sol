@@ -61,6 +61,8 @@ contract ERC721Luxy is
 
     // Base URI
     string public baseURI;
+    bool public isChangeable;
+    uint256 public maxSupply;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -68,19 +70,29 @@ contract ERC721Luxy is
     function __ERC721Luxy_init(
         string memory name_,
         string memory symbol_,
-        string memory baseURI_
+        string memory baseURI_,
+        bool isChangeable_,
+        uint256 maxSupply_
     ) external initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC721_init_unchained(name_, symbol_);
-        __RoyaltiesV1Luxy_init_unchained();
-        __ERC721Luxy_init_unchained();
         __ERC721Enumerable_init_unchained();
         __Ownable_init_unchained();
         _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
     }
 
-    function __ERC721Luxy_init_unchained() internal initializer {}
+    function __ERC721Luxy_init_unchained(
+        string memory baseURI_,
+        bool isChangeable_,
+        uint256 maxSupply_
+    ) internal initializer {
+        _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
+    }
 
     function mint(
         address payable _recipient,
@@ -88,6 +100,10 @@ contract ERC721Luxy is
         LibPart.Part[] memory _royalties
     ) external returns (uint256) {
         uint256 itemId = _tokenIds.current();
+        if(maxSupply != 0){
+            require(itemId < maxSupply, "ERC721: minting above the total supply");
+        }
+        
         _safeMint(_recipient, itemId);
         _setTokenURI(itemId, _metadata);
         _setRoyalties(itemId, _royalties);
@@ -117,11 +133,27 @@ contract ERC721Luxy is
     }
 
     /**
+     * @dev External function to allow base URI changes when necessary.
+     */
+    function setBaseURI(string memory baseURI_) external onlyOwner {
+        require(isChangeable, "Base URI is not changeable.");
+        _setBaseURI(baseURI_);
+    }
+
+    /**
      * @dev Internal function to set the base URI for all token IDs. It is
      * automatically added as a prefix to the value returned in {tokenURI}.
      */
     function _setBaseURI(string memory baseURI_) internal virtual {
         baseURI = baseURI_;
+    }
+
+    function _setChangeable(bool isChangeable_) internal virtual {
+        isChangeable = isChangeable_;
+    }
+
+    function _setMaxSupply(uint256 maxSupply_) internal virtual {
+        maxSupply = maxSupply_;
     }
 
     /**
@@ -143,6 +175,11 @@ contract ERC721Luxy is
         returns (string memory)
     {
         return super.tokenURI(tokenId);
+    }
+
+    function getMaxSupply() public view returns (uint256) {
+        require(maxSupply > 0, "There is no MaxSupply for this collection.");
+        return maxSupply;
     }
 
     /**

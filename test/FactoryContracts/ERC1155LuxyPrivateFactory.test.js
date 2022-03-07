@@ -6,22 +6,22 @@ const ethSigUtil = require('eth-sig-util');
 const { ZERO_ADDRESS } = constants;
 
 
-describe('ERC1155LuxyFactory', function () {
+describe('ERC1155LuxyPrivateFactory', function () {
 
     beforeEach(async () => {
         [creator1, creator2, factoryOwner, minter1, minter2, minter3] = await ethers.getSigners();
         const LuxyFactory = await ethers.getContractFactory(
-            'ERC1155LuxyFactory',
+            'ERC1155LuxyPrivateFactory',
         );
         const _luxyFactory = await LuxyFactory.connect(factoryOwner).deploy();
         testing = _luxyFactory;
-        let tx = await testing.connect(creator1).createToken('Creation1', 'Cri1', '',false, 0, 1);
+        let tx = await testing.connect(creator1).createToken('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 1);
         tx_receipt = await tx.wait();
         for (let i = 0; i < tx_receipt.events.length; i++) {
             ev = tx_receipt.events[i];
             if (ev.event == "Create1155LuxyContract") {
                 luxyCreator1address = ev.args.erc1155;
-                const response = await testing.connect(creator1).getAddress('Creation1', 'Cri1', '',false, 0, 1);
+                const response = await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 1);
                 console.log('contract address: ' + luxyCreator1address);
                 console.log(response);
                 const tokenArtifact = await artifacts.readArtifact("ERC1155Luxy");
@@ -29,7 +29,7 @@ describe('ERC1155LuxyFactory', function () {
 
             }
         }
-        
+
     });
     context('factory with minted tokens', function () {
         beforeEach(async function () {
@@ -37,12 +37,18 @@ describe('ERC1155LuxyFactory', function () {
             await creator1Contract.connect(minter2).mint(minter2.address, 8, [{ account: minter2.address, value: 5 }], "Thom");
         });
 
-        describe('check factory contract', function() {
+        describe('check factory contract', function () {
             it('should be equal to creator1 address', async function () {
-                expect(await (creator1Contract.address)).to.be.equal(await testing.connect(creator1).getAddress('Creation1', 'Cri1', '',false, 0, 1));
+                expect(await (creator1Contract.address)).to.be.equal(await testing.connect(creator1).getAddress('Creation1', 'Cri1', '', [minter1.address, minter2.address], false, 0, 1));
             });
-            it ('should be equal to creator1 address', async function () {
+            it('should be equal to creator1 address', async function () {
                 expect(await (creator1Contract.owner())).to.be.equal(creator1.address);
+            });
+            it('should revert if not allowed minter', async function () {
+                await expectRevert(
+                    creator1Contract.connect(minter3).mint(minter1.address, 10, [{ account: factoryOwner.address, value: 10 }], "Thom"),
+                    "Sender must be an approved minter or owner"
+                )
             });
         })
 

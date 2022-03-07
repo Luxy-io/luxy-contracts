@@ -3,10 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../ERC721/ERC721Luxy.sol";
+import "../ERC1155/ERC1155Private.sol";
 
-contract ERC721LuxyFactory is Ownable {
-    event Create721LuxyContract(address erc721);
+contract ERC1155LuxyPrivateFactory is Ownable {
+    event Create1155LuxyContract(address erc1155);
+    event Create1155LuxyPrivateContract(address erc1155);
 
     constructor() {}
 
@@ -14,19 +15,27 @@ contract ERC721LuxyFactory is Ownable {
         string memory _name,
         string memory _symbol,
         string memory _baseURI,
+        address[] memory _minters,
         bool _isChangeable,
         uint256 _maxSupply,
-        uint256 _salt
+        uint256 _salt 
     ) external {
-        address luxy721Token = deployProxy(
-            getData(_name, _symbol, _baseURI, _isChangeable,_maxSupply),
+        address luxy1155Token = deployProxy(
+            getData(_name, _symbol, _baseURI, _minters, _isChangeable,_maxSupply),
             _salt
         );
 
-        ERC721Luxy token = ERC721Luxy(luxy721Token);
-        token.__ERC721Luxy_init(_name, _symbol, _baseURI, _isChangeable,_maxSupply);
+        ERC1155LuxyPrivate token = ERC1155LuxyPrivate(luxy1155Token);
+        token.__ERC1155PrivateLuxy_init(
+            _name,
+            _symbol,
+            _baseURI,
+            _minters,
+            _isChangeable,
+            _maxSupply
+        );
         token.transferOwnership(_msgSender());
-        emit Create721LuxyContract(luxy721Token);
+        emit Create1155LuxyContract(luxy1155Token);
     }
 
     //deploying Luxy1155 contract with create2
@@ -50,20 +59,24 @@ contract ERC721LuxyFactory is Ownable {
         returns (bytes memory)
     {
         return
-            abi.encodePacked(type(ERC721Luxy).creationCode, abi.encode(_data));
+            abi.encodePacked(
+                type(ERC1155LuxyPrivate).creationCode,
+                abi.encode(_data)
+            );
     }
 
     //returns address that contract with such arguments will be deployed on
     function getAddress(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI,
-        bool _isChangeable,
+        string memory baseURI,
+        address[] memory _minters,
+        bool isChangeable,
         uint256 _maxSupply,
         uint256 _salt
     ) public view returns (address) {
         bytes memory bytecode = getCreationBytecode(
-            getData(_name, _symbol, _baseURI, _isChangeable,_maxSupply)
+            getData(_name, _symbol, baseURI, _minters, isChangeable,_maxSupply)
         );
 
         bytes32 hash = keccak256(
@@ -81,16 +94,18 @@ contract ERC721LuxyFactory is Ownable {
     function getData(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI,
+        string memory baseURI,
+        address[] memory _minters,
         bool _isChangeable,
         uint256 _maxSupply
     ) internal pure returns (bytes memory) {
         return
             abi.encodeWithSelector(
-                ERC721Luxy.__ERC721Luxy_init.selector,
+                ERC1155LuxyPrivate.__ERC1155PrivateLuxy_init.selector,
                 _name,
                 _symbol,
-                _baseURI,
+                baseURI,
+                _minters,
                 _isChangeable,
                 _maxSupply
             );

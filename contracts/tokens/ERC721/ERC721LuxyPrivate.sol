@@ -37,124 +37,90 @@
         ███████╗    ╚██████╔╝    ██╔╝ ██╗       ██║   
         ╚══════╝     ╚═════╝     ╚═╝  ╚═╝       ╚═╝   
 */
-
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
-import "./ERC1155BaseUri.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
 import "../ERC1271/ERC1271.sol";
+import "../ERC2981/IERC2981.sol";
 
-contract ERC1155Luxy is
+contract ERC721LuxyPrivate is
+    ERC721URIStorageUpgradeable,
+    ERC721EnumerableUpgradeable,
+    ERC721BurnableUpgradeable,
     OwnableUpgradeable,
-    ERC1155BurnableUpgradeable,
-    ERC1155BaseURI,
     RoyaltiesV1Luxy
 {
-    string public name;
-    string public symbol;
-    bool public isChangeable;
-    uint256 public maxSupply;
-    mapping(address => bool) private defaultApprovals;
-    event DefaultApproval(address indexed operator, bool hasApproval);
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
+    mapping(address => bool) private approvedMinters;
 
-    function __ERC1155Luxy_init(
-        string memory _name,
-        string memory _symbol,
-        string memory _baseURI,
-        bool _isChangeable,
-        uint256 _maxSupply
-    ) public initializer {
-        name = _name;
-        symbol = _symbol;
-        __Ownable_init_unchained();
-        __ERC1155Burnable_init_unchained();
+    // Base URI
+    string public baseURI;
+    bool public isChangeable;
+    uint256 public maxSupply;
+
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     */
+    function __ERC721LuxyPrivate_init(
+        string memory name_,
+        string memory symbol_,
+        string memory baseURI_,
+        address[] memory minters_,
+        bool isChangeable_,
+        uint256 maxSupply_
+    ) external initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
-        _setBaseURI(_baseURI);
-        _setChangeable(_isChangeable);
-        _setMaxSupply(_maxSupply);
+        __ERC721_init_unchained(name_, symbol_);
+        _setInitialMinters(minters_);
+        __ERC721Enumerable_init_unchained();
+        __Ownable_init_unchained();
+        _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
     }
 
-    function __ERC1155Luxy_init_unchained(string memory _baseURI, bool _isChangeable, uint256 _maxSupply) internal initializer {
-        _setBaseURI(_baseURI);
-        _setChangeable(_isChangeable);
-        _setMaxSupply(_maxSupply);
-    }
-
-    function _setDefaultApproval(address operator, bool hasApproval) internal {
-        defaultApprovals[operator] = hasApproval;
-        emit DefaultApproval(operator, hasApproval);
-    }
-
-    function isApprovedForAll(address _owner, address _operator)
-        public
-        view
-        override
-        returns (bool)
+    function __ERC721LuxyPrivate_init_unchained(string memory baseURI_ ,address[] memory minters_, bool isChangeable_, uint256 maxSupply_)
+        internal
+        initializer
     {
-        return
-            defaultApprovals[_operator] ||
-            super.isApprovedForAll(_owner, _operator);
-    }
-
-    function setDefaultApproval(address operator, bool hasApproval)
-        external
-        onlyOwner
-    {
-        _setDefaultApproval(operator, hasApproval);
-    }
-
-    function uri(uint256 id)
-        public
-        view
-        virtual
-        override(ERC1155BaseURI, ERC1155Upgradeable)
-        returns (string memory)
-    {
-        return _tokenURI(id);
+        _setInitialMinters(minters_);
+        _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
     }
 
     function mint(
-        address account,
-        uint256 amount,
-        LibPart.Part[] memory royalties,
-        string memory tokenURI
-    ) public {
-        uint256 id = _tokenIds.current();
+        address payable _recipient,
+        string memory _metadata,
+        LibPart.Part[] memory _royalties
+    ) external returns (uint256) {
+        require(
+            _isApprovedMinterorOwner(_msgSender()),
+            "Sender must be an approved minter or owner"
+        );
+        uint256 itemId = _tokenIds.current();
         if(maxSupply != 0){
-            require(id < maxSupply, "ERC721: minting above the total supply");
+            require(itemId < maxSupply, "ERC721: minting above the total supply");
         }
-        _mint(account, id, amount, "");
-        _setRoyalties(id, royalties);
-        _setTokenURI(id, tokenURI);
+        _safeMint(_recipient, itemId);
+        _setTokenURI(itemId, _metadata);
+        _setRoyalties(itemId, _royalties);
         _tokenIds.increment();
+        return itemId;
     }
 
-    function transferFrom(
-        uint256 id,
-        address from,
-        address to,
-        uint256 amount
-    ) public {
-        uint256 balance = balanceOf(from, id);
-        if (balance != 0) {
-            require(balance >= amount, "Insufficient balance");
-            super.safeTransferFrom(from, to, id, amount, "");
-        }
-    }
-
-    function updateAccount(
-        uint256 _id,
-        address _from,
-        address _to
-    ) external {
-        require(_msgSender() == _from, "not allowed");
-        super._updateAccount(_id, _from, _to);
+    function setApprovedMinter(address _minter, bool _approved)
+        external
+        onlyOwner
+    {
+        approvedMinters[_minter] = _approved;
     }
 
     /**
@@ -163,25 +129,19 @@ contract ERC1155Luxy is
     function supportsInterface(bytes4 _interfaceId)
         public
         view
-        override(ERC1155Upgradeable, ERC1155BaseURI, IERC165Upgradeable)
+        override(
+            ERC721Upgradeable,
+            ERC721EnumerableUpgradeable,
+            IERC165Upgradeable
+        )
         returns (bool)
     {
         return
             _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
-            _interfaceId == type(ERC1155BaseURI).interfaceId ||
-            _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
-            _interfaceId == type(OwnableUpgradeable).interfaceId ||
+            _interfaceId == type(ERC721URIStorageUpgradeable).interfaceId ||
+            _interfaceId == type(ERC721EnumerableUpgradeable).interfaceId ||
             _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
-    }
-
-    function _setMaxSupply(uint256 maxSupply_) internal virtual {
-        maxSupply = maxSupply_;
-    }
-
-    function getMaxSupply() public view returns (uint256) {
-        require(maxSupply > 0, "There is no MaxSupply for this collection.");
-        return maxSupply;
     }
 
     /**
@@ -193,10 +153,97 @@ contract ERC1155Luxy is
     }
 
     /**
+     * @dev Internal function to set the base URI for all token IDs. It is
+     * automatically added as a prefix to the value returned in {tokenURI}.
+     */
+    function _setBaseURI(string memory baseURI_) internal virtual {
+        baseURI = baseURI_;
+    }
+
+    /**
      * @dev Internal function to set changeability of BaseURI for NFT drops.
      */
     function _setChangeable(bool isChangeable_) internal virtual {
         isChangeable = isChangeable_;
+    }
+
+    function _setMaxSupply(uint256 maxSupply_) internal virtual {
+        maxSupply = maxSupply_;
+    }
+
+    /**
+     * @dev Internal function to set changeability of BaseURI for NFT drops.
+     */
+    function _setInitialMinters(address[] memory minters) internal virtual {
+        //initializing base minters list
+        for (uint256 i = 0; i < minters.length; i++) {
+            approvedMinters[minters[i]] = true;
+        }
+    }
+
+    /**
+     * @dev Base URI for computing {tokenURI}. The resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`.
+     * See {ERC721Upgradeable-_baseURI}.
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    function getMaxSupply() public view returns (uint256) {
+        require(maxSupply > 0, "There is no MaxSupply for this collection.");
+        return maxSupply;
+    }
+
+    /**
+     * @dev See {ERC721EnumerableUpgradeable-_beforeTokenTransfer}.
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+    /**
+     * @dev See {ERC721URIStorageUpgradeable-_burn}.
+     */
+    function _burn(uint256 tokenId)
+        internal
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    {
+        super._burn(tokenId);
+    }
+
+    /**
+     * @dev Returns whether `spender` is allowed to manage `tokenId`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     */
+    function _isApprovedMinterorOwner(address minter)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        if (minter == owner()) return true;
+        require(minter != address(0));
+        return approvedMinters[minter];
     }
 
     uint256[100] private __gap;
