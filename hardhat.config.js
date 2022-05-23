@@ -61,11 +61,14 @@ module.exports = {
   networks: {
     localhost: {
       url: 'http://127.0.0.1:8545',
+      gasPrice: "auto",
+      gasMultiplier: 10
     },
     goerli: {
       url:
         process.env.GOERLI_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+      accounts: [process.env.TEST_DEPLOY_GOERLI],
+      gasPrice: "auto"
     },
     rinkeby: {
       url:
@@ -104,8 +107,23 @@ module.exports = {
     },
     polygon: {
       url: process.env.POLYGON_ENDPOINT,
-      accounts: [process.env.LUXY_MAINNET_NFTSMU],
+      accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
       gasPrice: 80000000000,
+    },
+    syscoin: {
+      url: process.env.SYSCOIN_ENDPOINT,
+      accounts: [process.env.LUXY_FACTORIES],
+      gasPrice: "auto",
+      hardfork: "london",
+    },
+    tanenbaum: {
+      chainId: 5700,
+      url: process.env.TANENBAUM_ENDPOINT,
+      accounts: [process.env.DEPLOY_COLLECTION_SYSCOIN],
+      gasPrice: "auto",
+      hardfork: "london",
+      gasMultiplier: 10,
+      timeout: 9000000
     },
   },
   etherscan: {
