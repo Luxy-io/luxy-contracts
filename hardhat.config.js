@@ -19,7 +19,7 @@ task('accounts', 'Prints the list of accounts', async () => {
   }
 });
 
-task("debug", "Check transaction info", async(taskArgs, hre) => {
+task("debug", "Check transaction info", async (taskArgs, hre) => {
   const trace = await hre.network.provider.send("debug_traceTransaction", [
     "insertTXID",
     {
@@ -32,7 +32,7 @@ task("debug", "Check transaction info", async(taskArgs, hre) => {
     console.log(ev);
   }
 }
-  );
+);
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -64,62 +64,62 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 10
     },
-    goerli: {
-      url:
-        process.env.GOERLI_ENDPOINT,
-      accounts: [process.env.TEST_DEPLOY_GOERLI],
-      gasPrice: "auto"
-    },
+    // goerli: {
+    //   url:
+    //     process.env.GOERLI_ENDPOINT,
+    //   accounts: [process.env.TEST_DEPLOY_GOERLI],
+    //   gasPrice: "auto"
+    // },
     rinkeby: {
       url:
         process.env.RINKEBY_ENDPOINT,
-      accounts: [process.env.RINKEBY_PRIVATE_KEY],
-      gasPrice: 80000000000,
-      blockGasLimit: 22450000,
+      accounts: [process.env.ACCOUNT_PK],
+      gasPrice: "auto",
     },
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-      gasPrice: 80000000000,
-      blockGasLimit: 22450000,
+      accounts: [process.env.ACCOUNT_PK],
+      // gasPrice: "auto",
     },
-    kovan: {
-      url:
-        process.env.KOVAN_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-    },
-    bsc_testnet: {
-      url: process.env.BSC_TESTNET_ENDPOINT,
-      chainId: 97,
-      gasPrice: 20000000000,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-    },
-    bsc_mainnet: {
-      url: process.env.BSC_ENDPOINT,
-      chainId: 56,
-      gasPrice: 20000000000,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-    },
-    mainnet: {
-      url: process.env.MAINNET_ENDPOINT,
-      accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-    },
-    polygon: {
-      url: process.env.POLYGON_ENDPOINT,
-      accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
-      gasPrice: 80000000000,
-    },
+    // kovan: {
+    //   url:
+    //     process.env.KOVAN_ENDPOINT,
+    //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+    // },
+    // bsc_testnet: {
+    //   url: process.env.BSC_TESTNET_ENDPOINT,
+    //   chainId: 97,
+    //   gasPrice: 20000000000,
+    //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+    // },
+    // bsc_mainnet: {
+    //   url: process.env.BSC_ENDPOINT,
+    //   chainId: 56,
+    //   gasPrice: 20000000000,
+    //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+    // },
+    // mainnet: {
+    //   url: process.env.MAINNET_ENDPOINT,
+    //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
+    // },
+    // polygon: {
+    //   url: process.env.POLYGON_ENDPOINT,
+    //   accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
+    //   gasPrice: 80000000000,
+    // },
     syscoin: {
       url: process.env.SYSCOIN_ENDPOINT,
-      accounts: [process.env.LUXY_FACTORIES],
+      accounts: [process.env.ACCOUNT_PK],
       gasPrice: "auto",
       hardfork: "london",
+      gasMultiplier: 10,
+      timeout: 9000000
     },
     tanenbaum: {
       chainId: 5700,
       url: process.env.TANENBAUM_ENDPOINT,
-      accounts: [process.env.DEPLOY_COLLECTION_SYSCOIN],
+      accounts: [process.env.ACCOUNT_PK],
       gasPrice: "auto",
       hardfork: "london",
       gasMultiplier: 10,
