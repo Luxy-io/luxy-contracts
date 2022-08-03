@@ -57,17 +57,19 @@ contract LuxyGenesis is
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
     mapping(address => bool) private _whitelist;
+    uint256 public whitelistSize;
 
     string public baseURI;
     IERC20Upgradeable luxy;
 
     address public artist;
-    address public luxyLaunchpadFeeManegerProxy;
+    address public luxyLaunchpadFeeManagerProxy;
     uint256 public constant MAX_BATCH_MINT = 1;
     uint256 public constant MAX_SUPPLY = 1;
     uint256 public constant DROP_START_TIME = 1659123533;
     uint256 public constant PRICE_PER_TOKEN = 0.0001 ether;
-
+    uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
+    uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
@@ -75,7 +77,7 @@ contract LuxyGenesis is
         string memory baseURI_,
         IERC20Upgradeable luxy_,
         address artist_,
-        address luxyLaunchpadFeeManegerProxy_
+        address luxyLaunchpadFeeManagerProxy_
     ) external initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
@@ -86,7 +88,7 @@ contract LuxyGenesis is
             baseURI_,
             luxy_,
             artist_,
-            luxyLaunchpadFeeManegerProxy_
+            luxyLaunchpadFeeManagerProxy_
         );
     }
 
@@ -94,23 +96,24 @@ contract LuxyGenesis is
         string memory baseURI_,
         IERC20Upgradeable luxy_,
         address artist_,
-        address luxyLaunchpadFeeManegerProxy_
+        address luxyLaunchpadFeeManagerProxy_
     ) internal initializer {
         baseURI = baseURI_;
         luxy = luxy_;
         artist = artist_;
-        luxyLaunchpadFeeManegerProxy = luxyLaunchpadFeeManegerProxy_;
+        luxyLaunchpadFeeManagerProxy = luxyLaunchpadFeeManagerProxy_;
+        whitelistSize = 0;
     }
 
     function mint(uint256 num) external {
-        require(_msgSender() == luxyLaunchpadFeeManegerProxy, "Not allowed");
+        require(_msgSender() == luxyLaunchpadFeeManagerProxy, "Not allowed");
         require(block.timestamp > DROP_START_TIME, "Drop hasnt started yet");
         require(num <= MAX_BATCH_MINT, "Exceeds max batch per mint");
         require(totalSupply() + num <= MAX_SUPPLY, "Exceeds drop max supply");
 
-        if (block.timestamp < DROP_START_TIME + 1 days) {
+        if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
             require(isWhitelisted(tx.origin), "Not whitelisted");
-        } else if (block.timestamp < DROP_START_TIME + 2 days) {
+        } else if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
             require(
                 luxy.balanceOf(tx.origin) > 1000 ether,
                 "Not elegible to Luxy sale"
@@ -180,6 +183,7 @@ contract LuxyGenesis is
         for (uint i = 0; i < addresses.length; i++) {
             if (isWhitelisted(addresses[i])) {
                 _whitelist[addresses[i]] = true;
+                whitelistSize++;
             }
         }
     }
@@ -191,6 +195,7 @@ contract LuxyGenesis is
         for (uint i = 0; i < addresses.length; i++) {
             if (!isWhitelisted(addresses[i])) {
                 _whitelist[addresses[i]] = false;
+                whitelistSize--;
             }
         }
     }
