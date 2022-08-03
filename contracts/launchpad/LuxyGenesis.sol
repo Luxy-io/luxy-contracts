@@ -43,7 +43,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../RoyaltiesV1Luxy.sol";
 import "../tokens/ERC2981/IERC2981.sol";
@@ -54,9 +53,8 @@ contract LuxyGenesis is
     OwnableUpgradeable,
     RoyaltiesV1Luxy
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-    CountersUpgradeable.Counter private _tokenIds;
     mapping(address => bool) private _whitelist;
+    mapping(uint256 => uint256) private _assignOrders;
     uint256 public whitelistSize;
 
     string public baseURI;
@@ -64,12 +62,13 @@ contract LuxyGenesis is
 
     address public artist;
     address public luxyLaunchpadFeeManagerProxy;
-    uint256 public constant MAX_BATCH_MINT = 1;
-    uint256 public constant MAX_SUPPLY = 1;
-    uint256 public constant DROP_START_TIME = 1659123533;
+    uint256 public constant MAX_BATCH_MINT = 10;
+    uint256 public constant MAX_SUPPLY = 10000;
+    uint256 public constant DROP_START_TIME = 0;
     uint256 public constant PRICE_PER_TOKEN = 0.0001 ether;
     uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
     uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
+
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
@@ -121,9 +120,13 @@ contract LuxyGenesis is
         }
 
         for (uint256 i; i < num; i++) {
-            uint256 tokenId = _tokenIds.current();
-            _safeMint(tx.origin, tokenId);
-            _tokenIds.increment();
+            uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+            uint256 randIndex = _random() % genesisRemainingToAssign;
+            uint256 genesisIndex = _fillAssignOrder(
+                genesisRemainingToAssign,
+                randIndex
+            );
+            _safeMint(tx.origin, genesisIndex);
         }
     }
 
@@ -198,6 +201,45 @@ contract LuxyGenesis is
                 whitelistSize--;
             }
         }
+    }
+
+    function _fillAssignOrder(uint256 orderA, uint256 orderB)
+        internal
+        returns (uint256)
+    {
+        uint256 temp = orderA;
+        if (_assignOrders[orderA] > 0) temp = _assignOrders[orderA];
+        _assignOrders[orderA] = orderB;
+        if (_assignOrders[orderB] > 0)
+            _assignOrders[orderA] = _assignOrders[orderB];
+        _assignOrders[orderB] = temp;
+        return _assignOrders[orderA];
+    }
+
+    // pseudo-random function that's pretty robust because of syscoin's pow chainlocks
+    function _random() internal view returns (uint256) {
+        uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+        return
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp +
+                            block.difficulty +
+                            ((
+                                uint256(
+                                    keccak256(abi.encodePacked(block.coinbase))
+                                )
+                            ) / block.timestamp) +
+                            block.gaslimit +
+                            ((
+                                uint256(
+                                    keccak256(abi.encodePacked(_msgSender()))
+                                )
+                            ) / block.timestamp) +
+                            block.number
+                    )
+                )
+            ) / genesisRemainingToAssign;
     }
 
     uint256[100] private __gap;
