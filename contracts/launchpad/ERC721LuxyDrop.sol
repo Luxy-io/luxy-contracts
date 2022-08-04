@@ -42,6 +42,8 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
+//Uncomment this below line to enable whitelist
+// import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../RoyaltiesV1Luxy.sol";
@@ -60,6 +62,8 @@ contract ERC721LuxyDrop is
     // uint256 public whitelistSize;
 
     string public baseURI;
+    //Uncomment this section to enable whitelist
+    // IERC20Upgradeable luxy;
 
     address public artist;
     address public luxyLaunchpadFeeManagerProxy;
@@ -76,6 +80,7 @@ contract ERC721LuxyDrop is
      */
     function __ERC721LuxyDrop_init(
         string memory baseURI_,
+        // IERC20Upgradeable luxy_,
         address artist_,
         address luxyLaunchpadFeeManagerProxy_
     ) external initializer {
@@ -87,6 +92,7 @@ contract ERC721LuxyDrop is
         __ERC721LuxyDrop_init_unchained(
             baseURI_,
             artist_,
+            // luxy_,
             luxyLaunchpadFeeManagerProxy_
         );
     }
@@ -94,11 +100,13 @@ contract ERC721LuxyDrop is
     function __ERC721LuxyDrop_init_unchained(
         string memory baseURI_,
         address artist_,
+        // IERC20Upgradeable luxy_,
         address luxyLaunchpadFeeManagerProxy_
     ) internal initializer {
         baseURI = baseURI_;
         artist = artist_;
         luxyLaunchpadFeeManagerProxy = luxyLaunchpadFeeManagerProxy_;
+        // luxy = luxy_;
     }
 
     function mint(uint256 num) external {
@@ -183,7 +191,6 @@ contract ERC721LuxyDrop is
     //         }   whitelistSize++;
     //         }
     //     }
-    // }
 
     // function removeFromWhitelist(address[] memory addresses)
     //     external
