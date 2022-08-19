@@ -184,7 +184,7 @@ contract LuxyGenesis is
 
     function addToWhitelist(address[] memory addresses) external onlyOwner {
         for (uint i = 0; i < addresses.length; i++) {
-            if (isWhitelisted(addresses[i])) {
+            if (!isWhitelisted(addresses[i])) {
                 _whitelist[addresses[i]] = true;
                 whitelistSize++;
             }
@@ -196,7 +196,7 @@ contract LuxyGenesis is
         onlyOwner
     {
         for (uint i = 0; i < addresses.length; i++) {
-            if (!isWhitelisted(addresses[i])) {
+            if (isWhitelisted(addresses[i])) {
                 _whitelist[addresses[i]] = false;
                 whitelistSize--;
             }
