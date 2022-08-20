@@ -44,19 +44,19 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./ERC721LuxyDrop.sol";
 
-contract LuxyLaunchpadFeeManeger is OwnableUpgradeable {
+contract LuxyLaunchpadFeeManager is OwnableUpgradeable {
     uint256 public fee;
     address public team;
 
-    function __LuxyLaunchpadFeeManeger_init(uint256 fee_, address team_)
+    function __LuxyLaunchpadFeeManager_init(uint256 fee_, address team_)
         external
         initializer
     {
         __Ownable_init_unchained();
-        __LuxyLaunchpadFeeManeger_init_unchained(fee_, team_);
+        __LuxyLaunchpadFeeManager_init_unchained(fee_, team_);
     }
 
-    function __LuxyLaunchpadFeeManeger_init_unchained(
+    function __LuxyLaunchpadFeeManager_init_unchained(
         uint256 fee_,
         address team_
     ) internal initializer {

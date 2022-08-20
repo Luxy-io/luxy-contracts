@@ -71,9 +71,13 @@ contract ERC721LuxyDrop is
     uint256 public constant MAX_SUPPLY = 1;
     uint256 public constant DROP_START_TIME = 1;
     uint256 public constant PRICE_PER_TOKEN = 1 ether;
+
+    //Uncomment this section to enable LUXY Sale
+    // uint256 public constant MINIMUM_LUXY_AMOUNT = 1000 ether;
+    // uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
+
     //Uncomment this section to enable whitelist
     // uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
-    // uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -115,12 +119,15 @@ contract ERC721LuxyDrop is
         require(num <= MAX_BATCH_MINT, "Exceeds max batch per mint");
         require(totalSupply() + num <= MAX_SUPPLY, "Exceeds drop max supply");
 
-        //Uncomment this section to enable whitelist
+        // Uncomment this section to enable whitelist
         // if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
         //     require(isWhitelisted(tx.origin), "Not whitelisted");
-        // } else if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
+        // }
+
+        // Uncomment this section to enable LUXY Sale
+        // if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
         //     require(
-        //         luxy.balanceOf(tx.origin) > 1000 ether,
+        //         luxy.balanceOf(tx.origin) > MINIMUM_LUXY_AMOUNT,
         //         "Not elegible to Luxy sale"
         //     );
         // }
@@ -179,6 +186,7 @@ contract ERC721LuxyDrop is
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
+
     //Uncomment this section to enable whitelist
     // function isWhitelisted(address addr) public view returns (bool) {
     //     return _whitelist[addr];

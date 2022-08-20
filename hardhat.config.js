@@ -70,12 +70,12 @@ module.exports = {
     //   accounts: [process.env.TEST_DEPLOY_GOERLI],
     //   gasPrice: "auto"
     // },
-    rinkeby: {
-      url:
-        process.env.RINKEBY_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK],
-      gasPrice: "auto",
-    },
+    // rinkeby: {
+    //   url:
+    //     process.env.RINKEBY_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_PK],
+    //   gasPrice: "auto",
+    // },
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
@@ -108,23 +108,23 @@ module.exports = {
     //   accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
     //   gasPrice: 80000000000,
     // },
-    syscoin: {
-      url: process.env.SYSCOIN_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK],
-      gasPrice: "auto",
-      hardfork: "london",
-      gasMultiplier: 10,
-      timeout: 9000000
-    },
-    tanenbaum: {
-      chainId: 5700,
-      url: process.env.TANENBAUM_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK],
-      gasPrice: "auto",
-      hardfork: "london",
-      gasMultiplier: 10,
-      timeout: 9000000
-    },
+    // syscoin: {
+    //   url: process.env.SYSCOIN_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_PK],
+    //   gasPrice: "auto",
+    //   hardfork: "london",
+    //   gasMultiplier: 10,
+    //   timeout: 9000000
+    // },
+    // tanenbaum: {
+    //   chainId: 5700,
+    //   url: process.env.TANENBAUM_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_PK],
+    //   gasPrice: "auto",
+    //   hardfork: "london",
+    //   gasMultiplier: 10,
+    //   timeout: 9000000
+    // },
   },
   etherscan: {
     apiKey: process.env.POLYGONSCAN_KEY,

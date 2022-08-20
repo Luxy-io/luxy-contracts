@@ -12,6 +12,7 @@ package-lock.json
 build/
 builds/
 stable/
+.deps/
 
 # dotenv environment variables file
 .env
