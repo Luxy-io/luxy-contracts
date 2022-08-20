@@ -72,12 +72,12 @@ contract ERC721LuxyDrop is
     uint256 public constant DROP_START_TIME = 1;
     uint256 public constant PRICE_PER_TOKEN = 1 ether;
 
-    //Uncomment this line to enable LUXY Sale
+    //Uncomment this section to enable LUXY Sale
     // uint256 public constant MINIMUM_LUXY_AMOUNT = 1000 ether;
+    // uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
 
     //Uncomment this section to enable whitelist
     // uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
-    // uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
