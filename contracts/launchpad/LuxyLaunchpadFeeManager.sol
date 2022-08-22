@@ -67,7 +67,7 @@ contract LuxyLaunchpadFeeManager is OwnableUpgradeable {
     function mint(ERC721LuxyDrop drop, uint256 amount) external payable {
         require(drop.PRICE_PER_TOKEN() * amount <= msg.value, "Invalid amount");
         uint256 feeCalculated = (msg.value * fee) / 100;
-        (bool teamTx, ) = payable(team).call{value: fee}("");
+        (bool teamTx, ) = payable(team).call{value: feeCalculated}("");
         require(teamTx, "Transfer failed.");
         (bool artistTx, ) = payable(drop.artist()).call{
             value: msg.value - feeCalculated
