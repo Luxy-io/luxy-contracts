@@ -68,6 +68,7 @@ contract LuxyGenesis is
     uint256 public constant PRICE_PER_TOKEN = 0.0001 ether;
     uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
     uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
+    uint256 public constant MINIMUM_LUXY_AMOUNT = 1000 ether;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -114,7 +115,7 @@ contract LuxyGenesis is
             require(isWhitelisted(tx.origin), "Not whitelisted");
         } else if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
             require(
-                luxy.balanceOf(tx.origin) > 1000 ether,
+                luxy.balanceOf(tx.origin) > MINIMUM_LUXY_AMOUNT,
                 "Not elegible to Luxy sale"
             );
         }
