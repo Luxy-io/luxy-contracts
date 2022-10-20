@@ -79,7 +79,7 @@ module.exports = {
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK],
+      accounts: [process.env.DEPLOY_PK],
       // gasPrice: "auto",
     },
     // kovan: {
