@@ -83,7 +83,7 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
         }
     }
 
-    function mint(uint256 num) external {
+    function mint(uint256 num, address minter) external {
         require(
             _msgSender() == luxyLaunchpadFeeManagerProxy,
             "ERC721LuxyVoucher: Not allowed"
@@ -103,13 +103,13 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
 
         // Uncomment this section to enable whitelist
         // if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
-        //     require(isWhitelisted(tx.origin), "Not whitelisted");
+        //     require(isWhitelisted(minter), "Not whitelisted");
         // }
 
         // Uncomment this section to enable LUXY Sale
         // if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
         //     require(
-        //         luxy.balanceOf(tx.origin) > MINIMUM_LUXY_AMOUNT,
+        //         luxy.balanceOf(minter) > MINIMUM_LUXY_AMOUNT,
         //         "Not elegible to Luxy sale"
         //     );
         // }
@@ -122,11 +122,11 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
                 randIndex
             );
             uint256 tokenId = _tokenIds.current();
-            _safeMint(tx.origin, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
-            // _safeMint(tx.origin, genesisIndex);
+            _safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
+            // _safeMint(minter, genesisIndex);
             _tokenIds.increment();
             if (prizeById[tokenId]) {
-                voucherContract.mint(tokenId);
+                voucherContract.mint(tokenId,minter);
             }
         }
     }

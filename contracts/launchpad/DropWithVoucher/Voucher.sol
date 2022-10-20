@@ -21,7 +21,7 @@ contract ERC721Voucher is Ownable, ERC721Enumerable {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function mint(uint256 id) external {
+    function mint(uint256 id, address minter) external {
         require(
             _msgSender() == address(parentContract),
             "Voucher: Not allowed "
@@ -29,10 +29,10 @@ contract ERC721Voucher is Ownable, ERC721Enumerable {
 
         // for (uint256 i; i < num; i++) {
         //     uint256 tokenId = _tokenIds.current();
-        //     _safeMint(tx.origin, tokenId);
+        //     _safeMint(minter, tokenId);
         //     _tokenIds.increment();
         // }
-        _safeMint(tx.origin, id);
+        _safeMint(minter, id);
     }
 
     function burn(uint256 id) public {

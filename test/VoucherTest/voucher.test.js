@@ -25,17 +25,17 @@ describe('VoucherContract tests', function () {
     context("Functionality test", () => {
         it("Validate mint reversion", async () => {
             await expectRevert(
-                erc721Voucher.connect(account2).mint(1),
+                erc721Voucher.connect(account2).mint(1, account2.address),
                 "Not allowed"
             );
             await expectRevert(
-                erc721LuxyVoucher.connect(account2).mint(1)
+                erc721LuxyVoucher.connect(account2).mint(1, account2.address)
                 , "Not allowed"
             )
 
         });
         it("Validate Mint with no child nft creation", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, { value: "1000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account1.address, { value: "1000000000000000000" });
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
@@ -44,7 +44,7 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate Mint with child nft creation", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3,account1.address, { value: "3000000000000000000" });
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
@@ -60,7 +60,7 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate no child allowed to be transfered", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
             await expectRevert(
                 erc721Voucher.connect(account1).transferFrom(account1.address, account3.address, 1),
                 "Voucher: You only can transfer the voucher along with the P24 NFT"
@@ -72,13 +72,13 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate child transfered with parent NFT", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
             await erc721LuxyVoucher.connect(account1).transferFrom(account1.address, account3.address, 1);
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account3.address);
             expect(await erc721Voucher.ownerOf(1)).to.equal(account3.address);
         })
         it("Validate parent NFT transfer", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
             await erc721LuxyVoucher.connect(account1).transferFrom(account1.address, account3.address, 0);
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account3.address);
             await expectRevert(
@@ -87,7 +87,7 @@ describe('VoucherContract tests', function () {
             );
         })
         it("Validate claim system", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
             await expectRevert(
                 erc721LuxyVoucher.isClaimed(0),
                 "ERC721LuxyVoucher: There is no prize associated to this NFT"
