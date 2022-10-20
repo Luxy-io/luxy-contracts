@@ -43,7 +43,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 //Uncomment this below line to enable whitelist
-// import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+//import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../RoyaltiesV1Luxy.sol";
@@ -113,28 +113,25 @@ contract ERC721LuxyDrop is
         // luxy = luxy_;
     }
 
-    function mint(uint256 num) external {
+    function mint(uint256 num, address minter) external {
         require(_msgSender() == luxyLaunchpadFeeManagerProxy, "Not allowed");
         require(block.timestamp > DROP_START_TIME, "Drop hasnt started yet");
         require(num <= MAX_BATCH_MINT, "Exceeds max batch per mint");
         require(totalSupply() + num <= MAX_SUPPLY, "Exceeds drop max supply");
 
-        // Uncomment this section to enable whitelist
+        //Uncomment this section to enable whitelist
         // if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
-        //     require(isWhitelisted(tx.origin), "Not whitelisted");
-        // }
-
-        // Uncomment this section to enable LUXY Sale
-        // if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
+        //     require(isWhitelisted(minter), "Not whitelisted");
+        // } else if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
         //     require(
-        //         luxy.balanceOf(tx.origin) > MINIMUM_LUXY_AMOUNT,
+        //         luxy.balanceOf(minter) > MINIMUM_LUXY_AMOUNT,
         //         "Not elegible to Luxy sale"
         //     );
         // }
 
         for (uint256 i; i < num; i++) {
             uint256 tokenId = _tokenIds.current();
-            _safeMint(tx.origin, tokenId);
+            _safeMint(minter, tokenId);
             _tokenIds.increment();
         }
     }
@@ -193,18 +190,19 @@ contract ERC721LuxyDrop is
     // }
 
     // function addToWhitelist(address[] memory addresses) external onlyOwner {
-    //     for (uint i = 0; i < addresses.length; i++) {
+    //     for (uint256 i = 0; i < addresses.length; i++) {
     //         if (!isWhitelisted(addresses[i])) {
     //             _whitelist[addresses[i]] = true;
-    //         }   whitelistSize++;
+    //             whitelistSize++;
     //         }
     //     }
+    // }
 
     // function removeFromWhitelist(address[] memory addresses)
     //     external
     //     onlyOwner
     // {
-    //     for (uint i = 0; i < addresses.length; i++) {
+    //     for (uint256 i = 0; i < addresses.length; i++) {
     //         if (isWhitelisted(addresses[i])) {
     //             _whitelist[addresses[i]] = false;
     //             whitelistSize--;
