@@ -74,10 +74,12 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
     constructor(
         address _voucherContract,
         address _luxyLaunchpadFeeManagerProxy,
-        uint256[] memory ids
+        uint256[] memory ids,
+        address _artist,
     ) ERC721("LuxyVoucherTest", "LVNFT") {
         voucherContract = ERC721Voucher(_voucherContract);
         luxyLaunchpadFeeManagerProxy = _luxyLaunchpadFeeManagerProxy;
+        artist = _artist;
         for (uint256 i = 0; i < ids.length; i++) {
             prizeById[ids[i]] = true;
         }
