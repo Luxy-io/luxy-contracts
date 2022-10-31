@@ -6,7 +6,7 @@ const { ZERO_ADDRESS } = constants;
 
 describe('VoucherContract tests', function () {
     beforeEach(async () => {
-        [account0, account1, account2, account3, owner, owner2, owner3, owner4] = await ethers.getSigners();
+        [account0, account1, account2, account3, owner, owner2, owner3, artist] = await ethers.getSigners();
         const ERC721LuxyVoucher = await ethers.getContractFactory('ERC721LuxyVoucher');
         const ERC721Voucher = await ethers.getContractFactory('ERC721Voucher');
         const LuxyLaunchpadFeeManager = await ethers.getContractFactory('LuxyLaunchpadFeeManager');
@@ -18,7 +18,7 @@ describe('VoucherContract tests', function () {
         await luxyLaunchpadFeeManager.deployed();
         erc721Voucher = await ERC721Voucher.deploy();
         await erc721Voucher.deployed();
-        erc721LuxyVoucher = await ERC721LuxyVoucher.deploy(erc721Voucher.address, luxyLaunchpadFeeManager.address, [1, 3, 4, 6, 9, 11, 14, 18, 20, 23, 26, 33, 35, 89, 101, 121, 131, 145, 143, 33]);
+        erc721LuxyVoucher = await ERC721LuxyVoucher.deploy(erc721Voucher.address, luxyLaunchpadFeeManager.address, [1, 3, 4, 6, 9, 11, 14, 18, 20, 23, 26, 33, 35, 89, 101, 121, 131, 145, 143, 33], artist.address);
         await erc721LuxyVoucher.deployed();
         await erc721Voucher.setParent(erc721LuxyVoucher.address);
     });
@@ -111,6 +111,40 @@ describe('VoucherContract tests', function () {
             );
 
         })
+        it("Validate pause system", async () => {
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 70, account1.address, { value: "70000000000000000000" });
+            await expectRevert(
+                erc721LuxyVoucher.isClaimed(0),
+                "ERC721LuxyVoucher: There is no prize associated to this NFT"
+            )
+            expect(await erc721LuxyVoucher.isClaimed(1)).to.equal(false);
+            expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
+            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
+            await expectRevert(
+                luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "2000000000000000000" }),
+                'ERC721LuxyVoucher: Exceeds this round supply limit'
+            )
+
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account2.address, { value: "1000000000000000000" });
+            expect(await erc721LuxyVoucher.ownerOf(70)).to.equal(account2.address);
+            await expectRevert(
+                luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account1.address, { value: "1000000000000000000" }),
+                'ERC721LuxyVoucher: Drop round is over, next round will be announced'
+            )
+            await expectRevert(
+            erc721LuxyVoucher.connect(account0).pause(),
+            "Pausable: paused"
+            )
+            await expectRevert(
+                erc721LuxyVoucher.connect(account1).unpause(),
+                'Ownable: caller is not the owner'
+                )
+            await erc721LuxyVoucher.connect(account0).unpause();
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account1.address, { value: "1000000000000000000" });
+            expect(await erc721LuxyVoucher.ownerOf(71)).to.equal(account1.address);
+
+
+        });
 
     });
 

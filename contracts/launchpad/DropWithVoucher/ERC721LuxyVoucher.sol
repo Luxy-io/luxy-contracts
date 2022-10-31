@@ -43,11 +43,17 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "../../royalties-default/RoyaltiesV1Luxy.sol";
 import "../../tokens/ERC2981-default/IERC2981.sol";
 import "./Voucher.sol";
 
-contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
+contract ERC721LuxyVoucher is
+    Ownable,
+    RoyaltiesV1Luxy,
+    ERC721Enumerable,
+    Pausable
+{
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     string public baseURI;
@@ -56,10 +62,12 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
 
     address public artist;
     address public luxyLaunchpadFeeManagerProxy;
-    uint256 public constant MAX_BATCH_MINT = 7;
+    uint256 public constant MAX_BATCH_MINT = 70;
     uint256 public constant MAX_SUPPLY = 1000;
     uint256 public constant DROP_START_TIME = 1;
     uint256 public constant PRICE_PER_TOKEN = 1 ether;
+    bool private firstRound = true;
+    uint256 public constant ROUND_LIMIT = 71;
     struct PrizeMeta {
         bool isClaimed;
         address claimer;
@@ -75,7 +83,7 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
         address _voucherContract,
         address _luxyLaunchpadFeeManagerProxy,
         uint256[] memory ids,
-        address _artist,
+        address _artist
     ) ERC721("LuxyVoucherTest", "LVNFT") {
         voucherContract = ERC721Voucher(_voucherContract);
         luxyLaunchpadFeeManagerProxy = _luxyLaunchpadFeeManagerProxy;
@@ -86,6 +94,11 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
     }
 
     function mint(uint256 num, address minter) external {
+        require(
+            !paused(),
+            "ERC721LuxyVoucher: Drop round is over, next round will be announced"
+        );
+
         require(
             _msgSender() == luxyLaunchpadFeeManagerProxy,
             "ERC721LuxyVoucher: Not allowed"
@@ -102,6 +115,13 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
             totalSupply() + num <= MAX_SUPPLY,
             "ERC721LuxyVoucher: Exceeds drop max supply"
         );
+
+        if (firstRound) {
+            require(
+                totalSupply() + num <= ROUND_LIMIT,
+                "ERC721LuxyVoucher: Exceeds this round supply limit"
+            );
+        }
 
         // Uncomment this section to enable whitelist
         // if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
@@ -128,8 +148,12 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
             // _safeMint(minter, genesisIndex);
             _tokenIds.increment();
             if (prizeById[tokenId]) {
-                voucherContract.mint(tokenId,minter);
+                voucherContract.mint(tokenId, minter);
             }
+        }
+        if (totalSupply() == ROUND_LIMIT && firstRound) {
+            firstRound = false;
+            super._pause();
         }
     }
 
@@ -268,6 +292,14 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
                     )
                 )
             ) / genesisRemainingToAssign;
+    }
+
+    function pause() public onlyOwner whenNotPaused {
+        super._pause();
+    }
+
+    function unpause() public onlyOwner whenPaused {
+        super._unpause();
     }
 
     //Uncomment this section to enable whitelist
