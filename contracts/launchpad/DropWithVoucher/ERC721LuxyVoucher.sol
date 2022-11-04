@@ -137,7 +137,10 @@ contract ERC721LuxyVoucher is
         // }
 
         for (uint256 i; i < num; i++) {
-            uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+            uint256 genesisRemainingToAssign = ROUND_LIMIT - totalSupply();
+            if(!firstRound){
+                genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+            }
             uint256 randIndex = _random() % genesisRemainingToAssign;
             uint256 genesisIndex = _fillAssignOrder(
                 genesisRemainingToAssign,
@@ -148,7 +151,8 @@ contract ERC721LuxyVoucher is
             // _safeMint(minter, genesisIndex);
             _tokenIds.increment();
             if (prizeById[tokenId]) {
-                voucherContract.mint(tokenId, minter);
+                voucherContract.mint(tokenId, minter); // Switch to genesisIndex for random mint, for testing is easier to use linear order
+                //voucherContract.mint(genesisIndex, minter);
             }
         }
         if (totalSupply() == ROUND_LIMIT && firstRound) {
@@ -270,7 +274,11 @@ contract ERC721LuxyVoucher is
 
     // pseudo-random function that's pretty robust because of syscoin's pow chainlocks
     function _random() internal view returns (uint256) {
-        uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+
+        uint256 genesisRemainingToAssign = ROUND_LIMIT - totalSupply();
+            if(!firstRound){
+                genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+            }
         return
             uint256(
                 keccak256(
