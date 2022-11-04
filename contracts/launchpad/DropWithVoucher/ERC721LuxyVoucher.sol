@@ -65,11 +65,11 @@ contract ERC721LuxyVoucher is
     uint256 public constant MAX_BATCH_MINT = 10;
     uint256 public constant MAX_SUPPLY = 50;
     uint256 public constant DROP_START_TIME = 1667572200;
-    uint256 public constant PRICE_PER_TOKEN = 7 ether;
+    uint256 public constant PRICE_PER_TOKEN = 1 ether;
     uint256 public whitelistSize;
     uint256 public constant WHITELIST_EXPIRE_TIME = 5 minutes;
     bool private firstRound = true;
-    uint256 public constant ROUND_LIMIT = 11;
+    uint256 public constant ROUND_LIMIT = 5;
 
     struct PrizeMeta {
         bool isClaimed;
@@ -89,7 +89,7 @@ contract ERC721LuxyVoucher is
         address _luxyLaunchpadFeeManagerProxy,
         uint256[] memory ids,
         address _artist
-    ) ERC721("LuxyVoucherTest008", "LVNFT") {
+    ) ERC721("LuxyVoucherTest010", "LVNFT") {
         voucherContract = ERC721Voucher(_voucherContract);
         luxyLaunchpadFeeManagerProxy = _luxyLaunchpadFeeManagerProxy;
         artist = _artist;
@@ -155,7 +155,7 @@ contract ERC721LuxyVoucher is
             //_safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
             _safeMint(minter, genesisIndex);
             _tokenIds.increment();
-            if (prizeById[tokenId]) {
+            if (prizeById[genesisIndex]) {
                 voucherContract.mint(genesisIndex, minter);
             }
         }
