@@ -43,17 +43,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "../../royalties-default/RoyaltiesV1Luxy.sol";
 import "../../tokens/ERC2981-default/IERC2981.sol";
 import "./Voucher.sol";
 
-contract ERC721LuxyVoucher is
-    Ownable,
-    RoyaltiesV1Luxy,
-    ERC721Enumerable,
-    Pausable
-{
+contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     string public baseURI;
@@ -64,12 +58,10 @@ contract ERC721LuxyVoucher is
     address public luxyLaunchpadFeeManagerProxy;
     uint256 public constant MAX_BATCH_MINT = 10;
     uint256 public constant MAX_SUPPLY = 50;
-    uint256 public constant DROP_START_TIME = 1667572200;
+    uint256 public constant DROP_START_TIME = 1;
     uint256 public constant PRICE_PER_TOKEN = 1 ether;
     uint256 public whitelistSize;
-    uint256 public constant WHITELIST_EXPIRE_TIME = 5 minutes;
-    bool private firstRound = true;
-    uint256 public constant ROUND_LIMIT = 5;
+    uint256 public constant WHITELIST_EXPIRE_TIME = 0 minutes;
 
     struct PrizeMeta {
         bool isClaimed;
@@ -100,11 +92,6 @@ contract ERC721LuxyVoucher is
 
     function mint(uint256 num, address minter) external {
         require(
-            !paused(),
-            "ERC721LuxyVoucher: Drop round is over, next round will be announced"
-        );
-
-        require(
             _msgSender() == luxyLaunchpadFeeManagerProxy,
             "ERC721LuxyVoucher: Not allowed"
         );
@@ -120,14 +107,6 @@ contract ERC721LuxyVoucher is
             totalSupply() + num <= MAX_SUPPLY,
             "ERC721LuxyVoucher: Exceeds drop max supply"
         );
-
-        if (firstRound) {
-            require(
-                totalSupply() + num <= ROUND_LIMIT,
-                "ERC721LuxyVoucher: Exceeds this round supply limit"
-            );
-        }
-
         // Uncomment this section to enable whitelist
         if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
             require(isWhitelisted(minter), "Not whitelisted");
@@ -142,26 +121,19 @@ contract ERC721LuxyVoucher is
         // }
 
         for (uint256 i; i < num; i++) {
-            uint256 genesisRemainingToAssign = ROUND_LIMIT - totalSupply();
-            if (!firstRound) {
-                genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
-            }
+            uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
             uint256 randIndex = _random() % genesisRemainingToAssign;
             uint256 genesisIndex = _fillAssignOrder(
                 genesisRemainingToAssign,
                 randIndex
             );
-            uint256 tokenId = _tokenIds.current();
-            //_safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
+            // uint256 tokenId = _tokenIds.current();
+            // _safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
             _safeMint(minter, genesisIndex);
-            _tokenIds.increment();
+            // _tokenIds.increment();
             if (prizeById[genesisIndex]) {
                 voucherContract.mint(genesisIndex, minter);
             }
-        }
-        if (totalSupply() == ROUND_LIMIT && firstRound) {
-            firstRound = false;
-            super._pause();
         }
     }
 
@@ -278,10 +250,7 @@ contract ERC721LuxyVoucher is
 
     // pseudo-random function that's pretty robust because of syscoin's pow chainlocks
     function _random() internal view returns (uint256) {
-        uint256 genesisRemainingToAssign = ROUND_LIMIT - totalSupply();
-        if (!firstRound) {
-            genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
-        }
+        uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
         return
             uint256(
                 keccak256(
@@ -303,14 +272,6 @@ contract ERC721LuxyVoucher is
                     )
                 )
             ) / genesisRemainingToAssign;
-    }
-
-    function pause() public onlyOwner whenNotPaused {
-        super._pause();
-    }
-
-    function unpause() public onlyOwner whenPaused {
-        super._unpause();
     }
 
     //Uncomment this section to enable whitelist

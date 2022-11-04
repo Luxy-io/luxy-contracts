@@ -44,7 +44,7 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate Mint with child nft creation", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3,account1.address, { value: "3000000000000000000" });
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, account1.address, { value: "3000000000000000000" });
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
@@ -111,40 +111,6 @@ describe('VoucherContract tests', function () {
             );
 
         })
-        it("Validate pause system", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 70, account1.address, { value: "70000000000000000000" });
-            await expectRevert(
-                erc721LuxyVoucher.isClaimed(0),
-                "ERC721LuxyVoucher: There is no prize associated to this NFT"
-            )
-            expect(await erc721LuxyVoucher.isClaimed(1)).to.equal(false);
-            expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
-            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
-            await expectRevert(
-                luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "2000000000000000000" }),
-                'ERC721LuxyVoucher: Exceeds this round supply limit'
-            )
-
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account2.address, { value: "1000000000000000000" });
-            expect(await erc721LuxyVoucher.ownerOf(70)).to.equal(account2.address);
-            await expectRevert(
-                luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account1.address, { value: "1000000000000000000" }),
-                'ERC721LuxyVoucher: Drop round is over, next round will be announced'
-            )
-            await expectRevert(
-            erc721LuxyVoucher.connect(account0).pause(),
-            "Pausable: paused"
-            )
-            await expectRevert(
-                erc721LuxyVoucher.connect(account1).unpause(),
-                'Ownable: caller is not the owner'
-                )
-            await erc721LuxyVoucher.connect(account0).unpause();
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 1, account1.address, { value: "1000000000000000000" });
-            expect(await erc721LuxyVoucher.ownerOf(71)).to.equal(account1.address);
-
-
-        });
 
     });
 
