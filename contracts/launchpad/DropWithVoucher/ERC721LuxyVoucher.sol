@@ -62,17 +62,22 @@ contract ERC721LuxyVoucher is
 
     address public artist;
     address public luxyLaunchpadFeeManagerProxy;
-    uint256 public constant MAX_BATCH_MINT = 70;
-    uint256 public constant MAX_SUPPLY = 1000;
-    uint256 public constant DROP_START_TIME = 1;
-    uint256 public constant PRICE_PER_TOKEN = 1 ether;
+    uint256 public constant MAX_BATCH_MINT = 10;
+    uint256 public constant MAX_SUPPLY = 50;
+    uint256 public constant DROP_START_TIME = 1667572200;
+    uint256 public constant PRICE_PER_TOKEN = 7 ether;
+    uint256 public whitelistSize;
+    uint256 public constant WHITELIST_EXPIRE_TIME = 5 minutes;
     bool private firstRound = true;
-    uint256 public constant ROUND_LIMIT = 71;
+    uint256 public constant ROUND_LIMIT = 11;
+
     struct PrizeMeta {
         bool isClaimed;
         address claimer;
         uint256 time;
     }
+
+    mapping(address => bool) private _whitelist;
     mapping(uint256 => PrizeMeta) public prizeInfo;
     mapping(uint256 => bool) internal prizeById;
     mapping(uint256 => uint256) private _assignOrders;
@@ -84,7 +89,7 @@ contract ERC721LuxyVoucher is
         address _luxyLaunchpadFeeManagerProxy,
         uint256[] memory ids,
         address _artist
-    ) ERC721("LuxyVoucherTest", "LVNFT") {
+    ) ERC721("LuxyVoucherTest008", "LVNFT") {
         voucherContract = ERC721Voucher(_voucherContract);
         luxyLaunchpadFeeManagerProxy = _luxyLaunchpadFeeManagerProxy;
         artist = _artist;
@@ -124,9 +129,9 @@ contract ERC721LuxyVoucher is
         }
 
         // Uncomment this section to enable whitelist
-        // if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
-        //     require(isWhitelisted(minter), "Not whitelisted");
-        // }
+        if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
+            require(isWhitelisted(minter), "Not whitelisted");
+        }
 
         // Uncomment this section to enable LUXY Sale
         // if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
@@ -144,11 +149,11 @@ contract ERC721LuxyVoucher is
                 randIndex
             );
             uint256 tokenId = _tokenIds.current();
-            _safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
-            // _safeMint(minter, genesisIndex);
+            //_safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
+            _safeMint(minter, genesisIndex);
             _tokenIds.increment();
             if (prizeById[tokenId]) {
-                voucherContract.mint(tokenId, minter);
+                voucherContract.mint(genesisIndex, minter);
             }
         }
         if (totalSupply() == ROUND_LIMIT && firstRound) {
@@ -303,27 +308,28 @@ contract ERC721LuxyVoucher is
     }
 
     //Uncomment this section to enable whitelist
-    // function isWhitelisted(address addr) public view returns (bool) {
-    //     return _whitelist[addr];
-    // }
+    function isWhitelisted(address addr) public view returns (bool) {
+        return _whitelist[addr];
+    }
 
-    // function addToWhitelist(address[] memory addresses) external onlyOwner {
-    //     for (uint i = 0; i < addresses.length; i++) {
-    //         if (!isWhitelisted(addresses[i])) {
-    //             _whitelist[addresses[i]] = true;
-    //         }   whitelistSize++;
-    //         }
-    //     }
+    function addToWhitelist(address[] memory addresses) external onlyOwner {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (!isWhitelisted(addresses[i])) {
+                _whitelist[addresses[i]] = true;
+            }
+            whitelistSize++;
+        }
+    }
 
-    // function removeFromWhitelist(address[] memory addresses)
-    //     external
-    //     onlyOwner
-    // {
-    //     for (uint i = 0; i < addresses.length; i++) {
-    //         if (isWhitelisted(addresses[i])) {
-    //             _whitelist[addresses[i]] = false;
-    //             whitelistSize--;
-    //         }
-    //     }
-    // }
+    function removeFromWhitelist(address[] memory addresses)
+        external
+        onlyOwner
+    {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (isWhitelisted(addresses[i])) {
+                _whitelist[addresses[i]] = false;
+                whitelistSize--;
+            }
+        }
+    }
 }
