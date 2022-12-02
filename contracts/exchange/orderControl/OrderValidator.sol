@@ -79,7 +79,9 @@ abstract contract OrderValidator is
         view
     {
         if (order.salt == 0) {
-            require(_msgSender() == order.maker, "maker is not tx sender");
+            if (order.maker != address(0)) {
+                require(_msgSender() == order.maker, "maker is not tx sender");
+            }
         } else {
             if (_msgSender() != order.maker) {
                 bytes32 hash = LibOrder.hash(order);
@@ -96,6 +98,8 @@ abstract contract OrderValidator is
                         revert("order signature verification error");
                     }
                 }
+            } else {
+                require (order.maker != address(0), "no maker");
             }
         }
     }
