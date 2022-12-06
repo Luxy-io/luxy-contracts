@@ -266,15 +266,13 @@ describe('LuxyExchange tests', function () {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             let encDataLeft = await encDataV1([[[accounts[3], 10000]]]);
-            console.log('Checking encDataLeft', encDataLeft);
-            console.log('Checking DataV1', ORDER_DATA_V1);
             const left = Order(account2.address,Asset(ETH, "0x", 100), account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 0, 0, 0, ORDER_DATA_V1, encDataLeft);
             const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 100), 1, 0, 0, "0xffffffff", "0x");
             return { left, right }
         }
 
         it("From ETH(No DataV1) to ERC721(DataV1) Protocol, Origin fees, no Royalties, maker zero address ", async () => {
-            const { left, right } = await prepareETH_721DV0()
+            const { left, right } = await prepareETH_721DV1()
 
 
             const beforeProtocol = new BN(await web3.eth.getBalance(protocol));
@@ -288,7 +286,7 @@ describe('LuxyExchange tests', function () {
             expect(await erc721Token.balanceOf(account3.address)).to.equal(1);
             // expect(await t2.balanceOf(community)).to.equal(4);
         })
-        async function prepareETH_721DV0(t2Amount = 105) {
+        async function prepareETH_721DV1(t2Amount = 105) {
             await erc721Token.mint(account1.address, erc721TokenId1);
             await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
             let encDataLeft = await encDataV1([[[accounts[3], 10000]]]);
@@ -296,6 +294,33 @@ describe('LuxyExchange tests', function () {
             console.log('Checking DataV1', ORDER_DATA_V1);
             const left = Order(ZERO_ADDRESS,Asset(ETH, "0x", 100), account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 0, 0, 0, ORDER_DATA_V1, encDataLeft);
             const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ETH, "0x", 100), 1, 0, 0, "0xffffffff", "0x");
+            return { left, right }
+        }
+
+        it("From ERC20(No DataV1) to ERC721(DataV1) Protocol, Origin fees, no Royalties, maker zero address ", async () => {
+            const { left, right } = await prepareERC20_721DV1()
+
+
+            await testing.connect(account2).matchOrders(left, "0x", right, await getSignature(right, account1.address))
+            expect(await testing.fills(await libOrder.hashKey(right))).to.equal(100);
+
+            expect(await t2.balanceOf(account1.address)).to.equal(98);
+            expect(await t2.balanceOf(community)).to.equal(4);
+            expect(await t2.balanceOf(account2.address)).to.equal(3);
+            expect(await erc721Token.balanceOf(account1.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(account2.address)).to.equal(0);
+            expect(await erc721Token.balanceOf(accounts[3])).to.equal(1);
+        })
+        async function prepareERC20_721DV1(t2Amount = 105) {
+            await erc721Token.mint(account1.address, erc721TokenId1);
+            await t2.mint(account2.address, t2Amount);
+            await erc721Token.connect(account1).setApprovalForAll(transferProxy.address, true);
+            await t2.connect(account2).approve(erc20TransferProxy.address, 10000000);
+            let encDataLeft = await encDataV1([[[accounts[3], 10000]]]);
+            console.log('Checking encDataLeft', encDataLeft);
+            console.log('Checking DataV1', ORDER_DATA_V1);
+            const left = Order(ZERO_ADDRESS,Asset(ERC20, enc(t2.address), 100), account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), 0, 0, 0, ORDER_DATA_V1, encDataLeft);
+            const right = Order(account1.address, Asset(ERC721, enc(erc721Token.address, erc721TokenId1), 1), ZERO_ADDRESS, Asset(ERC20, enc(t2.address), 100), 1, 0, 0, "0xffffffff", "0x");
             return { left, right }
         }
 

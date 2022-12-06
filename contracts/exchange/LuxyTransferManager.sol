@@ -265,8 +265,8 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         if (feeSide == LibFeeSide.FeeSide.MAKE) {
             totalMakeValue = doTransfersWithFees(
                 fill.makeValue,
-                leftOrder.maker,
-                rightOrder.maker,
+                (leftOrder.maker == address(0)) ? _msgSender() : leftOrder.maker,
+                (rightOrder.maker == address(0)) ? _msgSender() : rightOrder.maker,
                 rightOrderData,
                 makeMatch,
                 takeMatch,
@@ -275,15 +275,15 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             transferPayouts(
                 takeMatch,
                 fill.takeValue,
-                rightOrder.maker,
+                (rightOrder.maker == address(0)) ? _msgSender() : rightOrder.maker,
                 leftOrderData.payouts,
                 TO_MAKER
             );
         } else if (feeSide == LibFeeSide.FeeSide.TAKE) {
             totalTakeValue = doTransfersWithFees(
                 fill.takeValue,
-                rightOrder.maker,
-                leftOrder.maker,
+                (rightOrder.maker == address(0)) ? _msgSender() : rightOrder.maker,
+                (leftOrder.maker == address(0)) ? _msgSender() : leftOrder.maker,
                 leftOrderData,
                 takeMatch,
                 makeMatch,
@@ -292,7 +292,7 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             transferPayouts(
                 makeMatch,
                 fill.makeValue,
-                leftOrder.maker,
+                (leftOrder.maker == address(0)) ? _msgSender() : leftOrder.maker,
                 rightOrderData.payouts,
                 TO_TAKER
             );
@@ -300,14 +300,14 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
             transferPayouts(
                 makeMatch,
                 fill.makeValue,
-                leftOrder.maker,
+                (leftOrder.maker == address(0)) ? _msgSender() : leftOrder.maker,
                 rightOrderData.payouts,
                 TO_TAKER
             );
             transferPayouts(
                 takeMatch,
                 fill.takeValue,
-                rightOrder.maker,
+                (rightOrder.maker == address(0)) ? _msgSender() : rightOrder.maker,
                 leftOrderData.payouts,
                 TO_MAKER
             );

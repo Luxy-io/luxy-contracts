@@ -81,6 +81,7 @@ module.exports = {
         process.env.MUMBAI_ENDPOINT,
       accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
       gasPrice: "auto",
+      gasMultiplier: 10
     },
     // kovan: {
     //   url:
