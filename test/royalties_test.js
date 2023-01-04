@@ -1,5 +1,6 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+
+const { ethers, upgrades } = require('hardhat');
 
 describe("Tests For Luxy Royalties", function () {
   let royalties;
@@ -24,11 +25,9 @@ describe("Tests For Luxy Royalties", function () {
       'RoyaltiesV1LuxyTest',
     );
     const _royalties = await upgrades.deployProxy(
-      RoyaltiesV1LuxyTest,
-      [],
-      { initializer: '__RoyaltiesV1Luxy_init' }
+      RoyaltiesV1LuxyTest
     );
-    
+
     await _royalties.deployed();
     royalties = _royalties;
     contractAddress = _royalties.address;
