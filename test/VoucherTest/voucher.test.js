@@ -7,7 +7,7 @@ const { ZERO_ADDRESS } = constants;
 describe('VoucherContract tests', function () {
     beforeEach(async () => {
         [account0, account1, account2, account3, owner, owner2, owner3, artist] = await ethers.getSigners();
-        const ERC721LuxyVoucher = await ethers.getContractFactory('ERC721LuxyVoucher');
+        const ERC721LuxyVoucher = await ethers.getContractFactory('ERC721LuxyVoucherTest');
         const ERC721Voucher = await ethers.getContractFactory('ERC721Voucher');
         const LuxyLaunchpadFeeManager = await ethers.getContractFactory('LuxyLaunchpadFeeManager');
         luxyLaunchpadFeeManager = await upgrades.deployProxy(
