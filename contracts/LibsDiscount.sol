@@ -43,10 +43,10 @@ pragma solidity ^0.8.0;
 
 library LibTier {
     bytes32 constant TIER_TYPEHASH =
-        keccak256("Tier(uint96 value,uint96 percentual)");
+        keccak256("Tier(uint256 value,uint96 percentual)");
 
     struct Tier {
-        uint96 value;
+        uint256 value;
         uint96 percentual;
     }
 }

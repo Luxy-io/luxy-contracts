@@ -47,7 +47,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
 import "../ERC1271/ERC1271.sol";
 
-contract ERC1155Luxy is
+contract ERC1155LuxyPrivate is
     OwnableUpgradeable,
     ERC1155BurnableUpgradeable,
     ERC1155BaseURI,
@@ -61,11 +61,13 @@ contract ERC1155Luxy is
     event DefaultApproval(address indexed operator, bool hasApproval);
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
+    mapping(address => bool) private approvedMinters;
 
-    function __ERC1155Luxy_init(
+    function __ERC1155PrivateLuxy_init(
         string memory _name,
         string memory _symbol,
         string memory _baseURI,
+        address[] memory _minters,
         bool _isChangeable,
         uint256 _maxSupply
     ) public initializer {
@@ -76,12 +78,17 @@ contract ERC1155Luxy is
         __Context_init_unchained();
         __ERC165_init_unchained();
         _setBaseURI(_baseURI);
+        _setInitialMinters(_minters);
         _setChangeable(_isChangeable);
         _setMaxSupply(_maxSupply);
     }
 
-    function __ERC1155Luxy_init_unchained(string memory _baseURI, bool _isChangeable, uint256 _maxSupply) internal initializer {
+    function __ERC1155PrivateLuxy_init_unchained(string memory _baseURI, address[] memory _minters, bool _isChangeable, uint256 _maxSupply)
+        internal
+        initializer
+    {
         _setBaseURI(_baseURI);
+        _setInitialMinters(_minters);
         _setChangeable(_isChangeable);
         _setMaxSupply(_maxSupply);
     }
@@ -89,6 +96,24 @@ contract ERC1155Luxy is
     function _setDefaultApproval(address operator, bool hasApproval) internal {
         defaultApprovals[operator] = hasApproval;
         emit DefaultApproval(operator, hasApproval);
+    }
+
+    function setApprovedMinter(address _minter, bool _approved)
+        external
+        onlyOwner
+    {
+        approvedMinters[_minter] = _approved;
+    }
+
+    function _isApprovedMinterorOwner(address minter)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        if (minter == owner()) return true;
+        require(minter != address(0));
+        return approvedMinters[minter];
     }
 
     function isApprovedForAll(address _owner, address _operator)
@@ -125,6 +150,10 @@ contract ERC1155Luxy is
         LibPart.Part[] memory royalties,
         string memory tokenURI
     ) public {
+        require(
+            _isApprovedMinterorOwner(_msgSender()),
+            "Sender must be an approved minter or owner"
+        );
         uint256 id = _tokenIds.current();
         if(maxSupply != 0){
             require(id < maxSupply, "ERC721: minting above the total supply");
@@ -157,6 +186,11 @@ contract ERC1155Luxy is
         super._updateAccount(_id, _from, _to);
     }
 
+    function setBaseURI(string memory _baseURI) external onlyOwner {
+        require(isChangeable, "Base URI is not changeable.");
+        _setBaseURI(_baseURI);
+    }
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */
@@ -171,7 +205,6 @@ contract ERC1155Luxy is
             _interfaceId == type(ERC1155BaseURI).interfaceId ||
             _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
             _interfaceId == type(OwnableUpgradeable).interfaceId ||
-            _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
     }
 
@@ -185,11 +218,13 @@ contract ERC1155Luxy is
     }
 
     /**
-     * @dev External function to allow base URI changes when necessary.
+     * @dev Internal function to set changeability of BaseURI for NFT drops.
      */
-    function setBaseURI(string memory baseURI_) external onlyOwner {
-        require(isChangeable, "Base URI is not changeable.");
-        _setBaseURI(baseURI_);
+    function _setInitialMinters(address[] memory minters) internal virtual {
+        //initializing base minters list
+        for (uint256 i = 0; i < minters.length; i++) {
+            approvedMinters[minters[i]] = true;
+        }
     }
 
     /**

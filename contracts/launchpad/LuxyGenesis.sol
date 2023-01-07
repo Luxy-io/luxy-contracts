@@ -13,7 +13,7 @@
       ▐░░░░░░░░░░░                 φ░░░░░░░░░░░░░░░░░░░░░░░▒,
        ░░░░░░░░░░░[             _;░░░░░░░░░░░░░░░░░░░░░░░░░░░
        \░░░░░░░░░░░»;;--,,. _  ,░░░░░░░░░░░░░░░░░░░░░░░░░░░░░Γ
-       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,
+       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,x
          _"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"=░░░░░░░░░░░░░░░░░
             Σ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_    `╙δ░░░░Γ"  ²░Γ_
          ,φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_
@@ -40,75 +40,95 @@
 
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "../../RoyaltiesV1Luxy.sol";
-import "../ERC1271/ERC1271.sol";
-import "../ERC2981/IERC2981.sol";
+import "../RoyaltiesV1Luxy.sol";
+import "../tokens/ERC2981/IERC2981.sol";
 
-contract ERC721Luxy is
-    ERC721URIStorageUpgradeable,
+contract LuxyGenesis is
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
     OwnableUpgradeable,
     RoyaltiesV1Luxy
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-    CountersUpgradeable.Counter private _tokenIds;
+    mapping(address => bool) private _whitelist;
+    mapping(uint256 => uint256) private _assignOrders;
+    uint256 public whitelistSize;
 
-    // Base URI
     string public baseURI;
-    bool public isChangeable;
-    uint256 public maxSupply;
+    IERC20Upgradeable luxy;
+
+    address public artist;
+    address public luxyLaunchpadFeeManagerProxy;
+    uint256 public constant MAX_BATCH_MINT = 10;
+    uint256 public constant MAX_SUPPLY = 10000;
+    uint256 public constant DROP_START_TIME = 0;
+    uint256 public constant PRICE_PER_TOKEN = 0.0001 ether;
+    uint256 public constant WHITELIST_EXPIRE_TIME = 1 days;
+    uint256 public constant LUXY_SALE_EXPIRE_TIME = 2 days;
+    uint256 public constant MINIMUM_LUXY_AMOUNT = 1000 ether;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    function __ERC721Luxy_init(
-        string memory name_,
-        string memory symbol_,
+    function __LuxyGenesis_init(
         string memory baseURI_,
-        bool isChangeable_,
-        uint256 maxSupply_
+        IERC20Upgradeable luxy_,
+        address artist_,
+        address luxyLaunchpadFeeManagerProxy_
     ) external initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
-        __ERC721_init_unchained(name_, symbol_);
+        __ERC721_init_unchained("LuxyGenesis", "LuxyGenesis");
         __ERC721Enumerable_init_unchained();
         __Ownable_init_unchained();
-        _setBaseURI(baseURI_);
-        _setChangeable(isChangeable_);
-        _setMaxSupply(maxSupply_);
+        __LuxyGenesis_init_unchained(
+            baseURI_,
+            luxy_,
+            artist_,
+            luxyLaunchpadFeeManagerProxy_
+        );
     }
 
-    function __ERC721Luxy_init_unchained(
+    function __LuxyGenesis_init_unchained(
         string memory baseURI_,
-        bool isChangeable_,
-        uint256 maxSupply_
+        IERC20Upgradeable luxy_,
+        address artist_,
+        address luxyLaunchpadFeeManagerProxy_
     ) internal initializer {
-        _setBaseURI(baseURI_);
-        _setChangeable(isChangeable_);
-        _setMaxSupply(maxSupply_);
+        baseURI = baseURI_;
+        luxy = luxy_;
+        artist = artist_;
+        luxyLaunchpadFeeManagerProxy = luxyLaunchpadFeeManagerProxy_;
+        whitelistSize = 0;
     }
 
-    function mint(
-        address payable _recipient,
-        string memory _metadata,
-        LibPart.Part[] memory _royalties
-    ) external returns (uint256) {
-        uint256 itemId = _tokenIds.current();
-        if(maxSupply != 0){
-            require(itemId < maxSupply, "ERC721: minting above the total supply");
+    function mint(uint256 num) external {
+        require(_msgSender() == luxyLaunchpadFeeManagerProxy, "Not allowed");
+        require(block.timestamp > DROP_START_TIME, "Drop hasnt started yet");
+        require(num <= MAX_BATCH_MINT, "Exceeds max batch per mint");
+        require(totalSupply() + num <= MAX_SUPPLY, "Exceeds drop max supply");
+
+        if (block.timestamp < DROP_START_TIME + WHITELIST_EXPIRE_TIME) {
+            require(isWhitelisted(tx.origin), "Not whitelisted");
+        } else if (block.timestamp < DROP_START_TIME + LUXY_SALE_EXPIRE_TIME) {
+            require(
+                luxy.balanceOf(tx.origin) > MINIMUM_LUXY_AMOUNT,
+                "Not elegible to Luxy sale"
+            );
         }
-        
-        _safeMint(_recipient, itemId);
-        _setTokenURI(itemId, _metadata);
-        _setRoyalties(itemId, _royalties);
-        _tokenIds.increment();
-        return itemId;
+
+        for (uint256 i; i < num; i++) {
+            uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+            uint256 randIndex = _random() % genesisRemainingToAssign;
+            uint256 genesisIndex = _fillAssignOrder(
+                genesisRemainingToAssign,
+                randIndex
+            );
+            _safeMint(tx.origin, genesisIndex);
+        }
     }
 
     /**
@@ -126,34 +146,17 @@ contract ERC721Luxy is
     {
         return
             _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
-            _interfaceId == type(ERC721URIStorageUpgradeable).interfaceId ||
             _interfaceId == type(ERC721EnumerableUpgradeable).interfaceId ||
             _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
     }
 
     /**
-     * @dev External function to allow base URI changes when necessary.
-     */
-    function setBaseURI(string memory baseURI_) external onlyOwner {
-        require(isChangeable, "Base URI is not changeable.");
-        _setBaseURI(baseURI_);
-    }
-
-    /**
      * @dev Internal function to set the base URI for all token IDs. It is
      * automatically added as a prefix to the value returned in {tokenURI}.
      */
-    function _setBaseURI(string memory baseURI_) internal virtual {
+    function setBaseURI(string memory baseURI_) external onlyOwner {
         baseURI = baseURI_;
-    }
-
-    function _setChangeable(bool isChangeable_) internal virtual {
-        isChangeable = isChangeable_;
-    }
-
-    function _setMaxSupply(uint256 maxSupply_) internal virtual {
-        maxSupply = maxSupply_;
     }
 
     /**
@@ -163,23 +166,6 @@ contract ERC721Luxy is
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
-    }
-
-    /**
-     * @dev See {IERC721Metadata-tokenURI}.
-     */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
-    }
-
-    function getMaxSupply() public view returns (uint256) {
-        require(maxSupply > 0, "There is no MaxSupply for this collection.");
-        return maxSupply;
     }
 
     /**
@@ -193,14 +179,68 @@ contract ERC721Luxy is
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    /**
-     * @dev See {ERC721URIStorageUpgradeable-_burn}.
-     */
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
+    function isWhitelisted(address addr) public view returns (bool) {
+        return _whitelist[addr];
+    }
+
+    function addToWhitelist(address[] memory addresses) external onlyOwner {
+        for (uint i = 0; i < addresses.length; i++) {
+            if (!isWhitelisted(addresses[i])) {
+                _whitelist[addresses[i]] = true;
+                whitelistSize++;
+            }
+        }
+    }
+
+    function removeFromWhitelist(address[] memory addresses)
+        external
+        onlyOwner
     {
-        super._burn(tokenId);
+        for (uint i = 0; i < addresses.length; i++) {
+            if (isWhitelisted(addresses[i])) {
+                _whitelist[addresses[i]] = false;
+                whitelistSize--;
+            }
+        }
+    }
+
+    function _fillAssignOrder(uint256 orderA, uint256 orderB)
+        internal
+        returns (uint256)
+    {
+        uint256 temp = orderA;
+        if (_assignOrders[orderA] > 0) temp = _assignOrders[orderA];
+        _assignOrders[orderA] = orderB;
+        if (_assignOrders[orderB] > 0)
+            _assignOrders[orderA] = _assignOrders[orderB];
+        _assignOrders[orderB] = temp;
+        return _assignOrders[orderA];
+    }
+
+    // pseudo-random function that's pretty robust because of syscoin's pow chainlocks
+    function _random() internal view returns (uint256) {
+        uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+        return
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp +
+                            block.difficulty +
+                            ((
+                                uint256(
+                                    keccak256(abi.encodePacked(block.coinbase))
+                                )
+                            ) / block.timestamp) +
+                            block.gaslimit +
+                            ((
+                                uint256(
+                                    keccak256(abi.encodePacked(_msgSender()))
+                                )
+                            ) / block.timestamp) +
+                            block.number
+                    )
+                )
+            ) / genesisRemainingToAssign;
     }
 
     uint256[100] private __gap;

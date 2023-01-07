@@ -13,7 +13,7 @@
       ▐░░░░░░░░░░░                 φ░░░░░░░░░░░░░░░░░░░░░░░▒,
        ░░░░░░░░░░░[             _;░░░░░░░░░░░░░░░░░░░░░░░░░░░
        \░░░░░░░░░░░»;;--,,. _  ,░░░░░░░░░░░░░░░░░░░░░░░░░░░░░Γ
-       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,
+       _`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░φ,,x
          _"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"=░░░░░░░░░░░░░░░░░
             Σ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_    `╙δ░░░░Γ"  ²░Γ_
          ,φ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░_
@@ -39,70 +39,49 @@
 */
 
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
-import "./LibOrder.sol";
-import "../lib/LibSignature.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./ERC721LuxyDrop.sol";
 
-abstract contract OrderValidator is
-    Initializable,
-    ContextUpgradeable,
-    EIP712Upgradeable
-{
-    using LibSignature for bytes32;
-    using AddressUpgradeable for address;
+contract LuxyLaunchpadFeeManager is OwnableUpgradeable {
+    uint256 public fee;
+    address public team;
 
-    bytes4 internal constant MAGICVALUE = 0x1626ba7e;
-
-    function __OrderValidator_init(string memory name, string memory version)
-        internal
+    function __LuxyLaunchpadFeeManager_init(uint256 fee_, address team_)
+        external
         initializer
     {
-        __OrderValidator_init_unchained(name, version);
+        __Ownable_init_unchained();
+        __LuxyLaunchpadFeeManager_init_unchained(fee_, team_);
     }
 
-    function __OrderValidator_init_unchained(
-        string memory name,
-        string memory version
+    function __LuxyLaunchpadFeeManager_init_unchained(
+        uint256 fee_,
+        address team_
     ) internal initializer {
-        __EIP712_init_unchained(name, version);
+        fee = fee_;
+        team = team_;
     }
 
-    function validate(LibOrder.Order memory order, bytes memory signature)
-        internal
-        view
-    {
-        if (order.salt == 0) {
-            if (order.maker != address(0)) {
-                require(_msgSender() == order.maker, "maker is not tx sender");
-            }
-        } else {
-            if (_msgSender() != order.maker) {
-                bytes32 hash = LibOrder.hash(order);
-                if (_hashTypedDataV4(hash).recover(signature) != order.maker) {
-                    if (order.maker.isContract()) {
-                        require(
-                            IERC1271Upgradeable(order.maker).isValidSignature(
-                                _hashTypedDataV4(hash),
-                                signature
-                            ) == MAGICVALUE,
-                            "function selector was not recognized and there's no fallback function"
-                        );
-                    } else {
-                        revert("order signature verification error");
-                    }
-                }
-            } else {
-                require (order.maker != address(0), "no maker");
-            }
-        }
+    function mint(ERC721LuxyDrop drop, uint256 amount) external payable {
+        require(drop.PRICE_PER_TOKEN() * amount <= msg.value, "Invalid amount");
+        uint256 feeCalculated = (msg.value * fee) / 100;
+        (bool teamTx, ) = payable(team).call{value: feeCalculated}("");
+        require(teamTx, "Transfer failed.");
+        (bool artistTx, ) = payable(drop.artist()).call{
+            value: msg.value - feeCalculated
+        }("");
+        require(artistTx, "Transfer failed.");
+
+        drop.mint(amount);
     }
 
-    uint256[50] private __gap;
+    function setFee(uint256 fee_) external onlyOwner {
+        fee = fee_;
+    }
+
+    function setTeam(address team_) external onlyOwner {
+        team = team_;
+    }
 }

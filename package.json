@@ -11,12 +11,14 @@
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "^2.1.4",
     "@openzeppelin/contracts-upgradeable": "4.5.1",
+    "@openzeppelin/contracts": "^4.4.1", 
     "@openzeppelin/hardhat-upgrades": "^1.9.0",
     "@openzeppelin/test-helpers": "^0.5.12",
     "dotenv": "^10.0.0",
     "eth-sig-util": "^2.5.4",
     "ethereumjs-util": "^7.1.0",
     "hardhat": "^2.6.0",
+    "hardhat-gas-reporter": "^1.0.8",
     "keccak256": "^1.0.3"
   },
   "devDependencies": {
@@ -26,6 +28,7 @@
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.4",
-    "web3": "^1.5.2"
+    "web3": "^1.7.3"
   }
 }
+

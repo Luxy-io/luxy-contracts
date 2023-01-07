@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const main = async () => {
     // Config for platform
     // Get contract factory
@@ -17,17 +18,20 @@ const main = async () => {
     console.log('transferProxy', transferProxy.address);
     console.log('ERC20TransferProxy', erc20TransferProxy.address);
     console.log('RoyaltiesRegistry', royaltiesRegistry.address);
-    // Deploy contract proxy
+    
     const ProxyLuxyFactory = await upgrades.deployProxy(
         Luxy,
-        [transferProxy.address, erc20TransferProxy.address, 200, '0x39599fee90874b03b8768D325b3c42d7b91549f7', royaltiesRegistry.address
-            , "0x39599fee90874b03b8768D325b3c42d7b91549f7", "0x6BB1a0a01BF028F23CE488c67089fff3a60745de",
-            "0x1A02f96593E1f7Ca18edC743b50C3103Ecc19340", 10],
+        [transferProxy.address, erc20TransferProxy.address, 200, process.env.LUXY_MARKETPLACE_FEE_ADDRESS, 
+            royaltiesRegistry.address, process.env.LUXY_MARKETPLACE_FEE_ADDRESS,process.env.LUXY_BURNING_ADDRESS,
+            process.env.LUXY_TOKEN,10],
         { initializer: '__LuxyCore_init' }
     );
     console.log('Deploying contract');
     // Wait for campaign factory deploy success
     await ProxyLuxyFactory.deployed();
+    await ProxyLuxyFactory.setBurnMode(true);
+    await ProxyLuxyFactory.setTierToken(process.env.LUXY_TOKEN);
+    await ProxyLuxyFactory.setTiers([['10000000000000000000000', 175], ['25000000000000000000000', 150], ['50000000000000000000000', 125], ['125000000000000000000000', 75], ['250000000000000000000000', 25]]);
     // Log the address
     console.log('ProxyLuxyFactory deployed at', ProxyLuxyFactory.address);
 };
