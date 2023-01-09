@@ -61,7 +61,7 @@ module.exports = {
   networks: {
     localhost: {
       url: 'http://127.0.0.1:8545',
-      gasPrice: "auto",
+      gasPrice: 80000000000,
       gasMultiplier: 10
     },
     // goerli: {
@@ -79,8 +79,9 @@ module.exports = {
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK],
-      // gasPrice: "auto",
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
+      gasMultiplier: 10
     },
     // kovan: {
     //   url:
