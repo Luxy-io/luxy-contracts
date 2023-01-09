@@ -45,6 +45,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155Burn
 import "./ERC1155BaseUri.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
+import "../ERC1271/ERC1271.sol";
 
 contract ERC1155Luxy is
     OwnableUpgradeable,
@@ -54,6 +55,8 @@ contract ERC1155Luxy is
 {
     string public name;
     string public symbol;
+    bool public isChangeable;
+    uint256 public maxSupply;
     mapping(address => bool) private defaultApprovals;
     event DefaultApproval(address indexed operator, bool hasApproval);
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -62,7 +65,9 @@ contract ERC1155Luxy is
     function __ERC1155Luxy_init(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI
+        string memory _baseURI,
+        bool _isChangeable,
+        uint256 _maxSupply
     ) public initializer {
         name = _name;
         symbol = _symbol;
@@ -70,10 +75,15 @@ contract ERC1155Luxy is
         __ERC1155Burnable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
-        __RoyaltiesV1Luxy_init_unchained();
         _setBaseURI(_baseURI);
+        _setChangeable(_isChangeable);
+        _setMaxSupply(_maxSupply);
     }
-    function __ERC1155Luxy_init_unchained() internal initializer {
+
+    function __ERC1155Luxy_init_unchained(string memory _baseURI, bool _isChangeable, uint256 _maxSupply) internal initializer {
+        _setBaseURI(_baseURI);
+        _setChangeable(_isChangeable);
+        _setMaxSupply(_maxSupply);
     }
 
     function _setDefaultApproval(address operator, bool hasApproval) internal {
@@ -112,11 +122,14 @@ contract ERC1155Luxy is
     function mint(
         address account,
         uint256 amount,
-        Royalties[] memory royalties,
+        LibPart.Part[] memory royalties,
         string memory tokenURI
     ) public {
         uint256 id = _tokenIds.current();
-        _mint(account, id, amount, '');
+        if(maxSupply != 0){
+            require(id < maxSupply, "ERC721: minting above the total supply");
+        }
+        _mint(account, id, amount, "");
         _setRoyalties(id, royalties);
         _setTokenURI(id, tokenURI);
         _tokenIds.increment();
@@ -127,13 +140,12 @@ contract ERC1155Luxy is
         address from,
         address to,
         uint256 amount
-    )   public  {
-        uint balance = balanceOf(from, id);
+    ) public {
+        uint256 balance = balanceOf(from, id);
         if (balance != 0) {
             require(balance >= amount, "Insufficient balance");
             super.safeTransferFrom(from, to, id, amount, "");
         }
-
     }
 
     function updateAccount(
@@ -144,13 +156,14 @@ contract ERC1155Luxy is
         require(_msgSender() == _from, "not allowed");
         super._updateAccount(_id, _from, _to);
     }
-      /**
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 _interfaceId)
         public
         view
-        override(ERC1155Upgradeable, ERC1155BaseURI)
+        override(ERC1155Upgradeable, ERC1155BaseURI, IERC165Upgradeable)
         returns (bool)
     {
         return
@@ -158,7 +171,32 @@ contract ERC1155Luxy is
             _interfaceId == type(ERC1155BaseURI).interfaceId ||
             _interfaceId == type(ERC1155BurnableUpgradeable).interfaceId ||
             _interfaceId == type(OwnableUpgradeable).interfaceId ||
+            _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
+    }
+
+    function _setMaxSupply(uint256 maxSupply_) internal virtual {
+        maxSupply = maxSupply_;
+    }
+
+    function getMaxSupply() public view returns (uint256) {
+        require(maxSupply > 0, "There is no MaxSupply for this collection.");
+        return maxSupply;
+    }
+
+    /**
+     * @dev External function to allow base URI changes when necessary.
+     */
+    function setBaseURI(string memory baseURI_) external onlyOwner {
+        require(isChangeable, "Base URI is not changeable.");
+        _setBaseURI(baseURI_);
+    }
+
+    /**
+     * @dev Internal function to set changeability of BaseURI for NFT drops.
+     */
+    function _setChangeable(bool isChangeable_) internal virtual {
+        isChangeable = isChangeable_;
     }
 
     uint256[100] private __gap;

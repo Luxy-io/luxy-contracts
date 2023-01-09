@@ -40,39 +40,57 @@
 
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "hardhat/console.sol";
+import "./LibPart.sol";
+import "./tokens/ERC2981/IERC2981.sol";
+import "./exchange/lib/LibBP.sol";
 
-abstract contract RoyaltiesV1Luxy is Initializable {
-    struct Royalties {
-        address payable account;
-        uint96 value;
-    }
-
-    event RoyaltiesSet(uint256 tokenId, Royalties[] royalties);
+//InterfaceID = 0x25292224
+abstract contract RoyaltiesV1Luxy is IERC2981 {
+    using LibBP for uint256;
+    event RoyaltiesSet(uint256 tokenId, LibPart.Part[] royalties);
     event RoyaltieAccountUpdate(
         uint256 tokenId,
         uint256 index,
         address previousAccount,
         address newAccount
     );
-    mapping(uint256 => Royalties[]) internal royalties;
-
-    function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
-
-    function __RoyaltiesV1Luxy_init() internal initializer {
-        __RoyaltiesV1Luxy_init_unchained();
-    }
+    mapping(uint256 => LibPart.Part[]) internal royalties;
 
     function getRoyalties(uint256 id)
-        external
+        public
         view
-        returns (Royalties[] memory)
+        virtual
+        returns (LibPart.Part[] memory)
     {
         return royalties[id];
     }
 
-    function _setRoyalties(uint256 _id, Royalties[] memory _royalties)
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        require(royalties[_tokenId].length != 0, "Royalties not set yet");
+        require(
+            royalties[_tokenId].length == 1,
+            "Multiples Royalties is not supported by EIP2981, use LuxyRoyaltiesV1"
+        );
+        require(
+            royalties[_tokenId][0].value <= 9800,
+            "Royalties are too high (>98%)"
+        );
+        royaltyAmount = _salePrice.bp(royalties[_tokenId][0].value);
+        receiver = royalties[_tokenId][0].account;
+    }
+
+
+    //Not deployed yet current InterfaceID is 0x25292224
+    // function calcRoyaltiesInterfaceId() external pure returns (bytes4) {
+    //     return type(RoyaltiesV1Luxy).interfaceId;
+    // }
+
+    function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
         internal
     {
         require(royalties[_id].length == 0, "Royalties already set");
@@ -116,5 +134,6 @@ abstract contract RoyaltiesV1Luxy is Initializable {
             royalties[_id][index].account
         );
     }
+
     uint256[50] private __gap;
 }

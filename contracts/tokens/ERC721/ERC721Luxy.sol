@@ -44,12 +44,16 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../../RoyaltiesV1Luxy.sol";
+import "../ERC1271/ERC1271.sol";
+import "../ERC2981/IERC2981.sol";
 
 contract ERC721Luxy is
     ERC721URIStorageUpgradeable,
     ERC721EnumerableUpgradeable,
     ERC721BurnableUpgradeable,
+    OwnableUpgradeable,
     RoyaltiesV1Luxy
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -57,6 +61,8 @@ contract ERC721Luxy is
 
     // Base URI
     string public baseURI;
+    bool public isChangeable;
+    uint256 public maxSupply;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -64,25 +70,40 @@ contract ERC721Luxy is
     function __ERC721Luxy_init(
         string memory name_,
         string memory symbol_,
-        string memory baseURI_
+        string memory baseURI_,
+        bool isChangeable_,
+        uint256 maxSupply_
     ) external initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC721_init_unchained(name_, symbol_);
-        __RoyaltiesV1Luxy_init_unchained();
-        __ERC721Luxy_init_unchained();
         __ERC721Enumerable_init_unchained();
+        __Ownable_init_unchained();
         _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
     }
 
-    function __ERC721Luxy_init_unchained() internal initializer {}
+    function __ERC721Luxy_init_unchained(
+        string memory baseURI_,
+        bool isChangeable_,
+        uint256 maxSupply_
+    ) internal initializer {
+        _setBaseURI(baseURI_);
+        _setChangeable(isChangeable_);
+        _setMaxSupply(maxSupply_);
+    }
 
     function mint(
         address payable _recipient,
         string memory _metadata,
-        Royalties[] memory _royalties
+        LibPart.Part[] memory _royalties
     ) external returns (uint256) {
         uint256 itemId = _tokenIds.current();
+        if(maxSupply != 0){
+            require(itemId < maxSupply, "ERC721: minting above the total supply");
+        }
+        
         _safeMint(_recipient, itemId);
         _setTokenURI(itemId, _metadata);
         _setRoyalties(itemId, _royalties);
@@ -96,14 +117,27 @@ contract ERC721Luxy is
     function supportsInterface(bytes4 _interfaceId)
         public
         view
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
+        override(
+            ERC721Upgradeable,
+            ERC721EnumerableUpgradeable,
+            IERC165Upgradeable
+        )
         returns (bool)
     {
         return
             _interfaceId == type(RoyaltiesV1Luxy).interfaceId ||
             _interfaceId == type(ERC721URIStorageUpgradeable).interfaceId ||
             _interfaceId == type(ERC721EnumerableUpgradeable).interfaceId ||
+            _interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(_interfaceId);
+    }
+
+    /**
+     * @dev External function to allow base URI changes when necessary.
+     */
+    function setBaseURI(string memory baseURI_) external onlyOwner {
+        require(isChangeable, "Base URI is not changeable.");
+        _setBaseURI(baseURI_);
     }
 
     /**
@@ -112,6 +146,14 @@ contract ERC721Luxy is
      */
     function _setBaseURI(string memory baseURI_) internal virtual {
         baseURI = baseURI_;
+    }
+
+    function _setChangeable(bool isChangeable_) internal virtual {
+        isChangeable = isChangeable_;
+    }
+
+    function _setMaxSupply(uint256 maxSupply_) internal virtual {
+        maxSupply = maxSupply_;
     }
 
     /**
@@ -135,6 +177,11 @@ contract ERC721Luxy is
         return super.tokenURI(tokenId);
     }
 
+    function getMaxSupply() public view returns (uint256) {
+        require(maxSupply > 0, "There is no MaxSupply for this collection.");
+        return maxSupply;
+    }
+
     /**
      * @dev See {ERC721EnumerableUpgradeable-_beforeTokenTransfer}.
      */
@@ -155,5 +202,6 @@ contract ERC721Luxy is
     {
         super._burn(tokenId);
     }
+
     uint256[100] private __gap;
 }

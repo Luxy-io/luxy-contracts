@@ -2,8 +2,8 @@ require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
 require('@openzeppelin/hardhat-upgrades');
-// require("@nomiclabs/hardhat-web3");
-// require("hardhat-gas-reporter");
+require("@nomiclabs/hardhat-web3");
+require("hardhat-gas-reporter");
 
 
 
@@ -41,6 +41,13 @@ task("debug", "Check transaction info", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 21,
+    enabled: false,
+    coinmarketcap: '461b583a-25cd-4e9d-9c8a-8955b4183b00',
+    token: 'AVAX'
+  },
   solidity: {
     version: '0.8.4',
     settings: {

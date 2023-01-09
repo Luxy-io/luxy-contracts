@@ -12,6 +12,7 @@ package-lock.json
 build/
 builds/
 stable/
+.deps/
 
 # dotenv environment variables file
 .env
@@ -214,7 +215,6 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
