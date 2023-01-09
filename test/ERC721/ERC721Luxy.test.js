@@ -27,7 +27,7 @@ describe('ERC721Luxy', function () {
         );
         const _luxy = await upgrades.deployProxy(
             Luxy,
-            ["ERC721Luxy", "LUXY", 'ipfs:/'],
+            ["ERC721Luxy", "LUXY", 'ipfs:/', false,0],
             { initializer: '__ERC721Luxy_init' }
         );
         await _luxy.deployed();

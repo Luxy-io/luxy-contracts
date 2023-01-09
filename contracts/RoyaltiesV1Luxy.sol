@@ -40,12 +40,12 @@
 
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./LibPart.sol";
 import "./tokens/ERC2981/IERC2981.sol";
 import "./exchange/lib/LibBP.sol";
 
-abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
+//InterfaceID = 0x25292224
+abstract contract RoyaltiesV1Luxy is IERC2981 {
     using LibBP for uint256;
     event RoyaltiesSet(uint256 tokenId, LibPart.Part[] royalties);
     event RoyaltieAccountUpdate(
@@ -55,12 +55,6 @@ abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
         address newAccount
     );
     mapping(uint256 => LibPart.Part[]) internal royalties;
-
-    function __RoyaltiesV1Luxy_init_unchained() internal initializer {}
-
-    function __RoyaltiesV1Luxy_init() external initializer {
-        __RoyaltiesV1Luxy_init_unchained();
-    }
 
     function getRoyalties(uint256 id)
         public
@@ -89,6 +83,12 @@ abstract contract RoyaltiesV1Luxy is Initializable, IERC2981 {
         royaltyAmount = _salePrice.bp(royalties[_tokenId][0].value);
         receiver = royalties[_tokenId][0].account;
     }
+
+
+    //Not deployed yet current InterfaceID is 0x25292224
+    // function calcRoyaltiesInterfaceId() external pure returns (bytes4) {
+    //     return type(RoyaltiesV1Luxy).interfaceId;
+    // }
 
     function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
         internal

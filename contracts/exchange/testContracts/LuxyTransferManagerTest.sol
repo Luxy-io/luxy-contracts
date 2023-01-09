@@ -38,11 +38,22 @@ contract LuxyTransferManagerTest is
         IERC20TransferProxy _erc20TransferProxy,
         uint256 newProtocolFee,
         address newCommunityWallet,
-        IRoyaltiesProvider newRoyaltiesProvider
+        IRoyaltiesProvider newRoyaltiesProvider,
+        address _feeWallet,
+        address _burningWallet,
+        address _luxyAddress,
+        uint256 _burningPercent
     ) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __TransferExecutor_init_unchained(_transferProxy, _erc20TransferProxy);
+        __TransferExecutor_init_unchained(
+            _transferProxy,
+            _erc20TransferProxy,
+            _feeWallet,
+            _burningWallet,
+            _luxyAddress,
+            _burningPercent
+        );
         __LuxyTransferManager_init_unchained(
             newProtocolFee,
             newCommunityWallet,

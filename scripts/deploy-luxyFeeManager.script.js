@@ -4,14 +4,14 @@ const { ethers, upgrades } = require('hardhat');
 const main = async () => {
     // Config for platform
     // Get contract factory
-    const ERC1155 = await ethers.getContractFactory('ERC1155Luxy');
+    const LUXYFeeManager = await ethers.getContractFactory('LuxyLaunchpadFeeManager');
     // Deploy contract proxy
-    const ProxyLuxy1155Factory = await upgrades.deployProxy(ERC1155, ["ERC1155Luxy", "LUXY", "",false,0], { initializer: '__ERC1155Luxy_init' });
+    const FeeManagerFactory = await upgrades.deployProxy(LUXYFeeManager, [50, '0x6ae23169D0809c5727f7bB1bF59335DbF9748fdd'], { initializer: '__LuxyLaunchpadFeeManager_init' });
     console.log('Deploying contract');
     // Wait for campaign factory deploy success
-    await ProxyLuxy1155Factory.deployed();
+    await FeeManagerFactory.deployed();
     // Log the address
-    console.log('ProxyLuxy1155Factory deployed at', ProxyLuxy1155Factory.address);
+    console.log('FeeManagerFactory deployed at', FeeManagerFactory.address);
 };
 
 main()

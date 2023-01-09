@@ -103,14 +103,6 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         emit RoyaltiesSetForContract(token, royalties);
     }
 
-    function setRoyaltiesByTokenAndTokenId(
-        address token,
-        uint256 tokenId,
-        LibPart.Part[] memory royalties
-    ) external {
-        checkOwner(token);
-        setRoyaltiesCacheByTokenAndTokenId(token, tokenId, royalties);
-    }
 
     function getRoyaltiesByToken(address token)
         external
@@ -240,14 +232,15 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             )
         ) {
             IERC2981 standard = IERC2981(token);
-            (address receiver, uint256 royaltyAmount) = standard.royaltyInfo(
-                tokenId,
-                10000
-            ); // this will get the percentual in bp from EIP2981 standard
-            LibPart.Part[] memory result = new LibPart.Part[](1);
-            result[0].account = payable(receiver);
-            result[0].value = uint96(royaltyAmount);
-            return result;
+            try standard.royaltyInfo(tokenId, 10000) returns (
+                address receiver,
+                uint256 royaltyAmount
+            ) {
+                LibPart.Part[] memory result = new LibPart.Part[](1);
+                result[0].account = payable(receiver);
+                result[0].value = uint96(royaltyAmount);
+                return result;
+            } catch {}
         }
         return new LibPart.Part[](0);
     }

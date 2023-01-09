@@ -10,15 +10,16 @@ describe('ERC1155Luxy', function () {
     beforeEach(async () => {
         accounts = await ethers.provider.listAccounts();
         [owner, newOwner, approved, anotherApproved, operator, other] = accounts;
+        [account0, account1] = await ethers.getSigners();
 
         // Deploy token
         const Luxy = await ethers.getContractFactory(
-            'ERC1155Luxy',
+            'ERC1155LuxyPrivate',
         );
         const _luxy = await upgrades.deployProxy(
             Luxy,
-            ["ERC1155Luxy", "LUXY", "",false,0],
-            { initializer: '__ERC1155Luxy_init' }
+            ["ERC1155LuxyPrivate", "LUXYPriv", "ipfs://",[],true,0],
+            { initializer: '__ERC1155PrivateLuxy_init' }
         );
         await _luxy.deployed();
         luxy = _luxy;
@@ -45,7 +46,7 @@ describe('ERC1155Luxy', function () {
 
         context('getting token URI', function () {
             it('returns the URI of the token', async function () {
-                expect(await luxy.uri(0)).to.be.equal("Thom");
+                expect(await luxy.uri(0)).to.be.equal("ipfs://Thom");
             });
         })
 
@@ -53,7 +54,7 @@ describe('ERC1155Luxy', function () {
             it("Emits event on the transfer to the first receiver", async () => {
                 await expect(luxy.mint(owner, 12, [{ account: owner, value: 10 }], "Thom"))
                     .to.emit(luxy, "URI")
-                    .withArgs("Thom", 2)
+                    .withArgs("ipfs://Thom", 2)
             })
         });
 
@@ -76,6 +77,28 @@ describe('ERC1155Luxy', function () {
             })
         })
 
+        context('Not owner trying to mint', function () {
+            it('transfering to new account', async function () {
+                await expectRevert(
+                luxy.connect(account1).mint(owner, 10, [{ account: owner, value: 10 }], "Thom"),
+                "Sender must be an approved minter or owner"
+                );
+
+            })
+        })
+        context('change Base URI', function () {
+            it('transfering to new account', async function () {
+                await luxy.setBaseURI('new://');
+                expect(await luxy.baseURI()).to.be.equal("new://");
+            });
+            it("not owner should fail", async function (){
+                await expectRevert(
+                    luxy.connect(account1).setBaseURI('nfts://'),
+                    "Ownable: caller is not the owner"
+                );
+            })
+        })
+
 
 
         context('when querying the zero address', function () {
@@ -87,11 +110,11 @@ describe('ERC1155Luxy', function () {
         });
         describe('metadata', function () {
             it('has a name', async function () {
-                expect(await luxy.name()).to.be.equal("ERC1155Luxy");
+                expect(await luxy.name()).to.be.equal("ERC1155LuxyPrivate");
             });
 
             it('has a symbol', async function () {
-                expect(await luxy.symbol()).to.be.equal("LUXY");
+                expect(await luxy.symbol()).to.be.equal("LUXYPriv");
             });
         });
 
