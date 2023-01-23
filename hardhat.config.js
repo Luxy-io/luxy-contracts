@@ -62,14 +62,15 @@ module.exports = {
     localhost: {
       url: 'http://127.0.0.1:8545',
       gasPrice: 80000000000,
+      gasMultiplier: 100
+    },
+    goerli: {
+      url:
+        process.env.GOERLI_ENDPOINT,
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
       gasMultiplier: 10
     },
-    // goerli: {
-    //   url:
-    //     process.env.GOERLI_ENDPOINT,
-    //   accounts: [process.env.TEST_DEPLOY_GOERLI],
-    //   gasPrice: "auto"
-    // },
     // rinkeby: {
     //   url:
     //     process.env.RINKEBY_ENDPOINT,
@@ -79,6 +80,13 @@ module.exports = {
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
+      gasMultiplier: 10
+    },
+    bedrock: {
+      url:
+        process.env.BEDROCK_ENDPOINT,
       accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
       gasPrice: "auto",
       gasMultiplier: 10
@@ -128,6 +136,6 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_KEY,
   },
 };
