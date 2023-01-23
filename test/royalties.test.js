@@ -1,5 +1,6 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+
+const { ethers, upgrades } = require('hardhat');
 
 describe("Tests For Luxy Royalties", function () {
   let royalties;
