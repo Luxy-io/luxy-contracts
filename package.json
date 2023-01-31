@@ -10,10 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "^2.1.4",
+    "@openzeppelin/contracts": "^4.8.1",
     "@openzeppelin/contracts-upgradeable": "4.5.1",
-    "@openzeppelin/contracts": "^4.4.1", 
     "@openzeppelin/hardhat-upgrades": "^1.9.0",
-    "@openzeppelin/test-helpers": "^0.5.12",
+    "@openzeppelin/test-helpers": "^0.5.16",
     "dotenv": "^10.0.0",
     "eth-sig-util": "^2.5.4",
     "ethereumjs-util": "^7.1.0",
@@ -31,4 +31,3 @@
     "web3": "^1.7.3"
   }
 }
-

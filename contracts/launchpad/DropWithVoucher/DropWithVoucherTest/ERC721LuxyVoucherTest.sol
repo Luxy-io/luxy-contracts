@@ -176,16 +176,18 @@ contract ERC721LuxyVoucherTest is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override {
+        super._beforeTokenTransfer(from, to, tokenId,batchSize);
     }
 
     function _afterTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721) {
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override {
         if (
             prizeById[tokenId] &&
             from != address(0) &&
@@ -193,7 +195,7 @@ contract ERC721LuxyVoucherTest is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
         ) {
             voucherContract.safeTransferFrom(from, to, tokenId);
         }
-        super._afterTokenTransfer(from, to, tokenId);
+        super._afterTokenTransfer(from, to, tokenId,batchSize);
     }
 
     function claim(uint256 tokenId) external {

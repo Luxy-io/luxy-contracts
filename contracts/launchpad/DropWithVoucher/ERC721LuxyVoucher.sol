@@ -121,18 +121,18 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
         // }
 
         for (uint256 i; i < num; i++) {
-            uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
-            uint256 randIndex = _random() % genesisRemainingToAssign;
-            uint256 genesisIndex = _fillAssignOrder(
-                genesisRemainingToAssign,
-                randIndex
-            );
-            // uint256 tokenId = _tokenIds.current();
-            // _safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
-            _safeMint(minter, genesisIndex);
-            // _tokenIds.increment();
-            if (prizeById[genesisIndex]) {
-                voucherContract.mint(genesisIndex, minter);
+        //     uint256 genesisRemainingToAssign = MAX_SUPPLY - totalSupply();
+        //     uint256 randIndex = _random() % genesisRemainingToAssign;
+        //     uint256 genesisIndex = _fillAssignOrder(
+        //         genesisRemainingToAssign,
+        //         randIndex
+        //     );
+            uint256 tokenId = _tokenIds.current();
+            _safeMint(minter, tokenId); // Switch to genesisIndex for random mint, for testing is easier to use linear order
+          //  _safeMint(minter, genesisIndex);
+             _tokenIds.increment();
+            if (prizeById[tokenId]) {
+                voucherContract.mint(tokenId, minter);
             }
         }
     }
@@ -176,16 +176,18 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function _afterTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721) {
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override {
         if (
             prizeById[tokenId] &&
             from != address(0) &&
@@ -193,7 +195,7 @@ contract ERC721LuxyVoucher is Ownable, RoyaltiesV1Luxy, ERC721Enumerable {
         ) {
             voucherContract.safeTransferFrom(from, to, tokenId);
         }
-        super._afterTokenTransfer(from, to, tokenId);
+        super._afterTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function claim(uint256 tokenId) external {

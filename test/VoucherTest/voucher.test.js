@@ -39,7 +39,7 @@ describe('VoucherContract tests', function () {
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
-                , "ERC721: owner query for nonexistent token"
+                , "ERC721: invalid token ID"
             );
         });
 
@@ -48,23 +48,25 @@ describe('VoucherContract tests', function () {
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
-                , "ERC721: owner query for nonexistent token"
+                , "ERC721: invalid token ID"
             );
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
             expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
             expect(await erc721LuxyVoucher.ownerOf(2)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(2)
-                , "ERC721: owner query for nonexistent token"
+                , "ERC721: invalid token ID"
             );
         });
 
         it("Validate no child allowed to be transfered", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
-            await expectRevert(
-                erc721Voucher.connect(account1).transferFrom(account1.address, account3.address, 1),
-                "Voucher: You only can transfer the voucher along with the P24 NFT"
+            
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, account1.address, { value: "3000000000000000000" });
+            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
+            await expectRevert( erc721Voucher.connect(account1).transferFrom(account1.address, account3.address, 1),
+            "Voucher: You only can transfer the voucher along with the P24 NFT"
             );
+          
             await expectRevert(
                 erc721Voucher.connect(account1).burn(1),
                 'Voucher: Not allowed'
@@ -72,7 +74,10 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate child transfered with parent NFT", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
+          //  expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, account1.address, { value: "3000000000000000000" });
+            expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
+            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
             await erc721LuxyVoucher.connect(account1).transferFrom(account1.address, account3.address, 1);
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account3.address);
             expect(await erc721Voucher.ownerOf(1)).to.equal(account3.address);
@@ -83,7 +88,7 @@ describe('VoucherContract tests', function () {
             expect(await erc721LuxyVoucher.ownerOf(0)).to.equal(account3.address);
             await expectRevert(
                 erc721Voucher.ownerOf(0)
-                , "ERC721: owner query for nonexistent token"
+                , "ERC721: invalid token ID"
             );
         })
         it("Validate claim system", async () => {
@@ -101,7 +106,7 @@ describe('VoucherContract tests', function () {
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
             await expectRevert(
                 erc721Voucher.ownerOf(1)
-                , "ERC721: owner query for nonexistent token"
+                , "ERC721: invalid token ID"
             );
             await erc721LuxyVoucher.connect(account1).transferFrom(account1.address, account2.address, 1);
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account2.address);
