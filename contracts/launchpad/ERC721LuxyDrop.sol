@@ -179,9 +179,10 @@ contract ERC721LuxyDrop is
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
+        uint256 tokenId,
+        uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     //Uncomment this section to enable whitelist

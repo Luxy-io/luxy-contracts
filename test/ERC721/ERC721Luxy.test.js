@@ -56,7 +56,7 @@ describe('ERC721Luxy', function () {
             context('when querying the zero address', function () {
                 it('throws', async function () {
                     await expectRevert(
-                        luxy.balanceOf(ZERO_ADDRESS), 'ERC721: balance query for the zero address',
+                        luxy.balanceOf(ZERO_ADDRESS), 'ERC721: address zero is not a valid owner',
                     );
                 });
             });
@@ -72,7 +72,7 @@ describe('ERC721Luxy', function () {
             context('when the given token ID was not tracked by this token', function () {
                 it('reverts', async function () {
                     await expectRevert(
-                        luxy.ownerOf(2), 'ERC721: owner query for nonexistent token',
+                        luxy.ownerOf(2), 'ERC721: invalid token ID',
                     );
                 });
             });
