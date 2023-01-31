@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
-contract ERC721Voucher is Ownable, ERC721Enumerable {
+contract ERC721Voucher is ERC721Enumerable, Ownable  {
     ERC721 public parentContract;
 
     constructor() ERC721("VoucherTest", "VNFT") {}
@@ -12,13 +12,14 @@ contract ERC721Voucher is Ownable, ERC721Enumerable {
     function _beforeTokenTransfer(
         address from,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721Enumerable) {
+        uint256 tokenId,
+        uint256 batchSize
+    )  internal override {
         require(
             _msgSender() == address(parentContract),
             "Voucher: You only can transfer the voucher along with the P24 NFT"
         );
-        super._beforeTokenTransfer(from, to, tokenId);
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function mint(uint256 id, address minter) external {
@@ -50,7 +51,7 @@ contract ERC721Voucher is Ownable, ERC721Enumerable {
     function isApprovedForAll(address owner, address operator)
         public
         view
-        override(ERC721)
+        override
         returns (bool)
     {
         if (_msgSender() == address(parentContract)) {
