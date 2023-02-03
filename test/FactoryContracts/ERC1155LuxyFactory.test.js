@@ -98,7 +98,7 @@ describe('ERC1155LuxyFactory', function () {
         context('when querying the zero address', function () {
             it('throws', async function () {
                 await expectRevert(
-                    creator1Contract.balanceOf(ZERO_ADDRESS, 0), 'ERC1155: balance query for the zero address',
+                    creator1Contract.balanceOf(ZERO_ADDRESS, 0), 'ERC1155: address zero is not a valid owner',
                 );
             });
         });

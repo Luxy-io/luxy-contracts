@@ -81,7 +81,7 @@ describe('ERC1155Luxy', function () {
         context('when querying the zero address', function () {
             it('throws', async function () {
                 await expectRevert(
-                    luxy.balanceOf(ZERO_ADDRESS, 0), 'ERC1155: balance query for the zero address',
+                    luxy.balanceOf(ZERO_ADDRESS, 0), 'ERC1155: address zero is not a valid owner',
                 );
             });
         });

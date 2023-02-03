@@ -60,11 +60,13 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate no child allowed to be transfered", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
-            await expectRevert(
-                erc721Voucher.connect(account1).transferFrom(account1.address, account3.address, 1),
-                "Voucher: You only can transfer the voucher along with the P24 NFT"
+            
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, account1.address, { value: "3000000000000000000" });
+            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
+            await expectRevert( erc721Voucher.connect(account1).transferFrom(account1.address, account3.address, 1),
+            "Voucher: You only can transfer the voucher along with the P24 NFT"
             );
+          
             await expectRevert(
                 erc721Voucher.connect(account1).burn(1),
                 'Voucher: Not allowed'
@@ -72,7 +74,10 @@ describe('VoucherContract tests', function () {
         });
 
         it("Validate child transfered with parent NFT", async () => {
-            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 2, account1.address, { value: "3000000000000000000" });
+          //  expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
+            await luxyLaunchpadFeeManager.connect(account1).mint(erc721LuxyVoucher.address, 3, account1.address, { value: "3000000000000000000" });
+            expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account1.address);
+            expect(await erc721Voucher.ownerOf(1)).to.equal(account1.address);
             await erc721LuxyVoucher.connect(account1).transferFrom(account1.address, account3.address, 1);
             expect(await erc721LuxyVoucher.ownerOf(1)).to.equal(account3.address);
             expect(await erc721Voucher.ownerOf(1)).to.equal(account3.address);
