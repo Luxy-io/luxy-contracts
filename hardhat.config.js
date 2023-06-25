@@ -91,6 +91,20 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 10
     },
+    rollux: {
+      url:
+        process.env.ROLLUX_ENDPOINT,
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
+      gasMultiplier: 10
+    },
+    rolluxMainnet: {
+      url:
+        process.env.ROLLUX_MAINNET_ENDPOINT,
+      accounts: [process.env.ACCOUNT_MKTCORE],
+      gasPrice: "auto",
+      gasMultiplier: 10
+    },
     // kovan: {
     //   url:
     //     process.env.KOVAN_ENDPOINT,
