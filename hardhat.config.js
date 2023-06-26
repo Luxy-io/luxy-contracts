@@ -122,10 +122,10 @@ module.exports = {
     //   gasPrice: 20000000000,
     //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     // },
-    // mainnet: {
-    //   url: process.env.MAINNET_ENDPOINT,
-    //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
-    // },
+    mainnet: {
+      url: process.env.MAINNET_ENDPOINT,
+      accounts: [process.env.ACCOUNT_PK_ETH],
+    },
     // polygon: {
     //   url: process.env.POLYGON_ENDPOINT,
     //   accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
