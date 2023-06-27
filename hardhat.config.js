@@ -84,27 +84,27 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 10
     },
-    bedrock: {
-      url:
-        process.env.BEDROCK_ENDPOINT,
-      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
-      gasPrice: "auto",
-      gasMultiplier: 10
-    },
-    rollux: {
-      url:
-        process.env.ROLLUX_ENDPOINT,
-      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
-      gasPrice: "auto",
-      gasMultiplier: 10
-    },
-    rolluxMainnet: {
-      url:
-        process.env.ROLLUX_MAINNET_ENDPOINT,
-      accounts: [process.env.ACCOUNT_MKTCORE],
-      gasPrice: "auto",
-      gasMultiplier: 10
-    },
+    // bedrock: {
+    //   url:
+    //     process.env.BEDROCK_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+    //   gasPrice: "auto",
+    //   gasMultiplier: 10
+    // },
+    // rollux: {
+    //   url:
+    //     process.env.ROLLUX_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+    //   gasPrice: "auto",
+    //   gasMultiplier: 10
+    // },
+    // rolluxMainnet: {
+    //   url:
+    //     process.env.ROLLUX_MAINNET_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_MKTCORE],
+    //   gasPrice: "auto",
+    //   gasMultiplier: 10
+    // },
     // kovan: {
     //   url:
     //     process.env.KOVAN_ENDPOINT,
@@ -122,10 +122,10 @@ module.exports = {
     //   gasPrice: 20000000000,
     //   accounts: [process.env.DEPLOY_TEST_ACCOUNT_PRIVATE_KEY],
     // },
-    mainnet: {
-      url: process.env.MAINNET_ENDPOINT,
-      accounts: [process.env.ACCOUNT_PK_ETH],
-    },
+    // mainnet: {
+    //   url: process.env.MAINNET_ENDPOINT,
+    //   accounts: [process.env.ACCOUNT_PK_ETH],
+    // },
     // polygon: {
     //   url: process.env.POLYGON_ENDPOINT,
     //   accounts: [process.env.DEPLOY_COLLECTIONS_ACCOUNT_PRIVATE_KEY],
