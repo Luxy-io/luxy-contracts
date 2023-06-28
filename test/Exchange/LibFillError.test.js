@@ -102,32 +102,49 @@ describe('LuxyExchange tests', function () {
     context("Do matchOrders(), ", () => {
      
         it("From ERC1155 to ETH:Protocol, ", async () => {
+            const amountToFirstBuy = 12;
+            const totalSellAmountETH = 100;
+            const totalSellAmountERC1155 = 30;
             await testERC1155_V1.mint(account2.address, erc1155TokenId1, [], 100);
             await testERC1155_V1.connect(account2).setApprovalForAll(transferProxy.address, true);
-            const { left, right } = await prepare1155V1_20DV1Orders(11, 100)
-
+            const { left, right } = await prepare1155V1_20DV1Orders(totalSellAmountERC1155, totalSellAmountETH, amountToFirstBuy)
             await testing.connect(account1).matchOrders(left, await getSignature(left, account2.address), right, "0x",{ value: 300});
 		
-            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(11);
-            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(89);
+            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(12);
+            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(88);
 
-			const { left2, right2 } = await prepare1155V1_20DV1Orders(15,150 )
-
+			// const { left2, right2 } = await prepare1155V1_20DV1Orders(15,150 )
+            const { right : right2 } = await prepare20DV1Orders(9,100, totalSellAmountETH,totalSellAmountERC1155);
             await testing.connect(account1).matchOrders(left, await getSignature(left, account2.address), right2, "0x",{ value: 300});
 		
-            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(26);
-            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(74);
+            expect(await testERC1155_V1.balanceOf(account1.address, erc1155TokenId1)).to.equal(21);
+            expect(await testERC1155_V1.balanceOf(account2.address, erc1155TokenId1)).to.equal(79);
 
 
         })
         ////
-        async function prepare1155V1_20DV1Orders(erc1155Amount, etherAmount) {
+        async function prepare1155V1_20DV1Orders(erc1155Amount, etherAmount, amountToFirstBuy) {
    
             const salt =  new Date().getTime()
+            const modulus = amountToFirstBuy* etherAmount % erc1155Amount; 
+            if(modulus*1000 >= amountToFirstBuy*etherAmount){
+            throw new Error("rounding error must be smaller than 0.1%");
+            }
             const left = Order(account2.address, Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), erc1155Amount), ZERO_ADDRESS,Asset(ETH, "0x", etherAmount), 1, 0, 0, "0xffffffff", "0x");
-			const right = Order(account1.address, Asset(ETH, "0x", etherAmount), ZERO_ADDRESS,Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), erc1155Amount), salt, 0, 0, "0xffffffff", "0x");
+			const right = Order(account1.address, Asset(ETH, "0x", 100), ZERO_ADDRESS,Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), amountToFirstBuy), salt, 0, 0, "0xffffffff", "0x");
 			
             return { left, right }
+        }
+        async function prepare20DV1Orders(erc1155Amount, etherAmount, target, totalErc1155 ) {
+            const modulus = erc1155Amount* target % totalErc1155; 
+            if(modulus*1000 >= target*erc1155Amount){
+            throw new Error("rounding error must be smaller than 0.1%");
+            }
+   
+            const salt =  new Date().getTime()
+			const right = Order(account1.address, Asset(ETH, "0x", etherAmount), ZERO_ADDRESS,Asset(ERC1155, enc(testERC1155_V1.address, erc1155TokenId1), erc1155Amount), salt, 0, 0, "0xffffffff", "0x");
+			
+            return { right }
         }
 
     });
