@@ -18,6 +18,7 @@ describe('LuxyExchange tests', function () {
         signer1 = new ethers.Wallet(pk1, ethers.provider);
         signer2 = new ethers.Wallet(pk2, ethers.provider);
         transferProxy = await ethers.getContractAt('TransferProxy', "0x1114D1D30cfeF3d7bd636Bc5911380b9673e8a57");
+        // erc20TransferProxy = await ethers.getContractAt('ERC20TransferProxy', "address");
         console.log('Check address', transferProxy.address);
         testERC1155_V1 = await ethers.getContractAt('ERC1155LuxyPrivate', "0xe321941dC64aF3f0600d350e605386339995d0A8");
         testing = await ethers.getContractAt('Luxy', "0x297d6679A71087A089d98606dFA06Fb4cA2B2B7C");
