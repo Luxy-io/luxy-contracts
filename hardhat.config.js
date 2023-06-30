@@ -49,13 +49,26 @@ module.exports = {
     token: 'AVAX'
   },
   solidity: {
-    version: '0.8.2',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 1000
-      }
-    }
+    compilers: [
+      {
+        version: "0.8.2",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000
+          },
+        },
+      },
+      {
+        version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   defaultNetwork: 'localhost',
   networks: {
@@ -80,7 +93,11 @@ module.exports = {
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+        accounts: [
+          process.env.ACCOUNT_DEPLOY_TESTNET,
+          process.env.PRIVATE_KEY_1,
+          process.env.PRIVATE_KEY_2
+        ],
       gasPrice: "auto",
       gasMultiplier: 10
     },
@@ -150,6 +167,6 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY,
+    apiKey: process.env.POLYGONSCAN_KEY,
   },
 };

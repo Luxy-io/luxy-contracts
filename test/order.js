@@ -1,5 +1,5 @@
 const EIP712 = require("./EIP712");
-
+const ethSigUtil = require('eth-sig-util');
 function AssetType(assetClass, data) {
 	return { assetClass, data }
 }
@@ -44,6 +44,21 @@ async function sign(name, version, order, account, verifyingContract) {
 	}, 'Order', order, Types);
 	return (await EIP712.signTypedData(web3, account, data)).sig;
 }
+async function signWithPrivateKey(name, version, order,from, verifyingContract, privateKey) {
+
+	const chainId = Number(await web3.eth.getChainId());
+	const typedData = EIP712.createTypeData({
+		name: name,
+		version: version,
+		chainId: chainId.toString(),
+		verifyingContract: verifyingContract
+	}, 'Order', order, Types);
+	const privKey = Buffer.from(privateKey.slice(2), 'hex');
+      const response = ethSigUtil.signTypedMessage(privKey, {data: typedData}, 'V4');
+
+    return response;
+
+  }
 
 async function domainSeparator(name, version, verifyingContract) {
 	const chainId = Number(await web3.eth.getChainId());
@@ -51,4 +66,4 @@ async function domainSeparator(name, version, verifyingContract) {
 	return data;
 }
 
-module.exports = { AssetType, Asset, Order, sign, domainSeparator }
+module.exports = { AssetType, Asset, Order, sign, domainSeparator, signWithPrivateKey }
