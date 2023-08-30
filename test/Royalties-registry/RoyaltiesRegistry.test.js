@@ -42,7 +42,9 @@ describe('RoyaltiesRegistry', function () {
             await luxy721.mint(accounts[2], 'TERERE', [[accounts[5], 700], [accounts[6], 800], [accounts[7], 900], [accounts[8], 1000]]);  //set royalties by contract
             part = await royaltiesRegistry.getRoyalties(luxy721.address, erc721TokenId1);
             const tx_receipt = await part.wait()
+            console.log(tx_receipt)
             const royaltiesResponse = tx_receipt.events[0].args.royalties
+            console.log(royaltiesResponse)
             expect(royaltiesResponse.length).to.be.equal(4);
             expect(royaltiesResponse[0].account).to.be.equal(accounts[5]);
             expect(royaltiesResponse[0].value.toNumber()).to.be.equal(700);
@@ -112,7 +114,7 @@ describe('RoyaltiesRegistry', function () {
             await externalLuxy.transferOwnership(owner.address);
             await expectRevert(
                 royaltiesRegistry.connect(owner).setRoyaltiesByToken(externalLuxy.address, [[accounts[3], 2000], [accounts[4], 1001]]),
-                "Set by token royalties sum more, than 30%"
+                "Set by token royalties sum more than 30%"
             );
         })
 

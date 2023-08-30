@@ -84,13 +84,13 @@ module.exports = {
       gasPrice: "auto",
       gasMultiplier: 10
     },
-    // bedrock: {
-    //   url:
-    //     process.env.BEDROCK_ENDPOINT,
-    //   accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
-    //   gasPrice: "auto",
-    //   gasMultiplier: 10
-    // },
+    bedrock: {
+      url:
+        process.env.BEDROCK_ENDPOINT,
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
+      gasMultiplier: 10
+    },
     // rollux: {
     //   url:
     //     process.env.ROLLUX_ENDPOINT,

@@ -54,6 +54,8 @@ abstract contract RoyaltiesV1Luxy is IERC2981 {
         address previousAccount,
         address newAccount
     );
+    event SecondarySaleFees(uint256 tokenId, address[] recipients, uint[] bps);
+    
     mapping(uint256 => LibPart.Part[]) internal royalties;
 
     function getRoyalties(uint256 id)
@@ -90,22 +92,27 @@ abstract contract RoyaltiesV1Luxy is IERC2981 {
     //     return type(RoyaltiesV1Luxy).interfaceId;
     // }
 
-    function _setRoyalties(uint256 _id, LibPart.Part[] memory _royalties)
+    function _setRoyalties(uint256 id, LibPart.Part[] memory _royalties)
         internal
     {
-        require(royalties[_id].length == 0, "Royalties already set");
-        for (uint256 i = 0; i < _royalties.length; i++) {
-            require(
-                _royalties[i].account != address(0x0),
-                "Recipient should be present"
-            );
-            require(
-                _royalties[i].value != 0,
-                "Royalty value should be positive"
-            );
-            royalties[_id].push(_royalties[i]);
+       uint256 totalValue;
+        for (uint i = 0; i < _royalties.length; ++i) {
+            require(_royalties[i].account != address(0x0), "Recipient should be present");
+            require(_royalties[i].value != 0, "Royalty value should be positive");
+            totalValue += _royalties[i].value;
+            royalties[id].push(_royalties[i]);
         }
-        emit RoyaltiesSet(_id, _royalties);
+        require(totalValue < 10000, "Royalty total value should be < 10000");
+        _onRoyaltiesSet(id, _royalties);
+    }
+    function _onRoyaltiesSet(uint256 id, LibPart.Part[] memory _royalties) internal {
+        address[] memory recipients = new address[](_royalties.length);
+        uint[] memory bps = new uint[](_royalties.length);
+        for (uint i = 0; i < _royalties.length; ++i) {
+            recipients[i] = _royalties[i].account;
+            bps[i] = _royalties[i].value;
+        }
+       emit SecondarySaleFees(id, recipients, bps); 
     }
 
     function _updateAccount(
@@ -134,6 +141,7 @@ abstract contract RoyaltiesV1Luxy is IERC2981 {
             royalties[_id][index].account
         );
     }
+
 
     uint256[50] private __gap;
 }

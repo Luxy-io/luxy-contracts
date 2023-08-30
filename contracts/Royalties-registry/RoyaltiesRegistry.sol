@@ -72,17 +72,19 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         __Ownable_init_unchained();
     }
 
-    function setProviderByToken(address token, address provider) external {
+    function setProviderByToken(address token, address provider) public {
         checkOwner(token);
         royaltiesProviders[token] = provider;
     }
 
-    function setRoyaltiesByToken(address token, LibPart.Part[] memory royalties)
-        external
-    {
+    function setRoyaltiesByToken(
+        address token,
+        LibPart.Part[] memory royalties
+    ) external {
         checkOwner(token);
         uint256 sumRoyalties = 0;
         delete royaltiesByToken[token];
+
         for (uint256 i = 0; i < royalties.length; i++) {
             require(
                 royalties[i].account != address(0x0),
@@ -92,31 +94,42 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
                 royalties[i].value != 0,
                 "Royalty value for RoyaltiesByToken should be > 0"
             );
+
+            // Check if the new royalty is already present in the array
+            for (
+                uint256 j = 0;
+                j < royaltiesByToken[token].royalties.length;
+                j++
+            ) {
+                require(
+                    royalties[i].account !=
+                        royaltiesByToken[token].royalties[j].account,
+                    "Duplicate account detected in royalties"
+                );
+            }
+
             royaltiesByToken[token].royalties.push(royalties[i]);
             sumRoyalties += royalties[i].value;
         }
+
         require(
             sumRoyalties <= 3000,
-            "Set by token royalties sum more, than 30%"
+            "Set by token royalties sum more than 30%"
         );
         royaltiesByToken[token].initialized = true;
         emit RoyaltiesSetForContract(token, royalties);
     }
 
-
-    function getRoyaltiesByToken(address token)
-        external
-        view
-        returns (LibPart.Part[] memory)
-    {
+    function getRoyaltiesByToken(
+        address token
+    ) external view returns (LibPart.Part[] memory) {
         return royaltiesByToken[token].royalties;
     }
 
-    function getRoyaltiesByTokenAndTokenId(address token, uint256 tokenId)
-        external
-        view
-        returns (LibPart.Part[] memory)
-    {
+    function getRoyaltiesByTokenAndTokenId(
+        address token,
+        uint256 tokenId
+    ) external view returns (LibPart.Part[] memory) {
         return
             royaltiesByTokenAndTokenId[keccak256(abi.encode(token, tokenId))]
                 .royalties;
@@ -134,24 +147,37 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         }
     }
 
-    function getRoyalties(address token, uint256 tokenId)
-        external
-        override
-        returns (LibPart.Part[] memory)
-    {
-        RoyaltiesSet storage royaltiesSetNFT = royaltiesByTokenAndTokenId[
+    function getRoyalties(
+        address token,
+        uint256 tokenId
+    ) external override returns (LibPart.Part[] memory) {
+        RoyaltiesSet memory royaltiesSetNFT = royaltiesByTokenAndTokenId[
             keccak256(abi.encode(token, tokenId))
         ];
-        RoyaltiesSet storage royaltiesSetToken = royaltiesByToken[token];
+        RoyaltiesSet memory royaltiesSetToken = royaltiesByToken[token];
+        uint totalRoyalties = royaltiesSetNFT.royalties.length +
+            royaltiesSetToken.royalties.length;
+
         if (royaltiesSetNFT.initialized && royaltiesSetToken.initialized) {
-            for (uint256 i = 0; i < royaltiesSetNFT.royalties.length; i++) {
-                royaltiesSetToken.royalties.push(royaltiesSetNFT.royalties[i]);
+            LibPart.Part[] memory combinedRoyalties = new LibPart.Part[](
+                totalRoyalties
+            );
+            for (uint256 i = 0; i < royaltiesSetToken.royalties.length; i++) {
+                combinedRoyalties[i] = royaltiesSetToken.royalties[i];
             }
-            return royaltiesSetToken.royalties;
-        } else if (royaltiesSetNFT.initialized) {
+
+            for (uint256 i = 0; i < royaltiesSetNFT.royalties.length; i++) {
+                combinedRoyalties[
+                    royaltiesSetToken.royalties.length + i
+                ] = royaltiesSetNFT.royalties[i];
+            }
+
+            return combinedRoyalties;
+        } else if (
+            royaltiesSetNFT.initialized && !royaltiesSetToken.initialized
+        ) {
             return royaltiesSetNFT.royalties;
         }
-
         (
             bool result,
             LibPart.Part[] memory resultRoyalties
@@ -159,16 +185,30 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         if (result == false) {
             resultRoyalties = royaltiesFromContract(token, tokenId);
         }
+        totalRoyalties =
+            resultRoyalties.length +
+            royaltiesSetToken.royalties.length;
+
         setRoyaltiesCacheByTokenAndTokenId(token, tokenId, resultRoyalties);
-        if (royaltiesSetToken.initialized) {
-            if (resultRoyalties.length > 0) {
-                for (uint256 i = 0; i < resultRoyalties.length; i++) {
-                    royaltiesSetToken.royalties.push(resultRoyalties[i]);
-                }
+
+        LibPart.Part[] memory combinedRoyalties = new LibPart.Part[](
+            totalRoyalties
+        );
+        if (resultRoyalties.length > 0) {
+            for (uint256 i = 0; i < royaltiesSetToken.royalties.length; i++) {
+                combinedRoyalties[i] = royaltiesSetToken.royalties[i];
             }
+
+            for (uint256 i = 0; i < resultRoyalties.length; i++) {
+                combinedRoyalties[
+                    royaltiesSetToken.royalties.length + i
+                ] = resultRoyalties[i];
+            }
+            return combinedRoyalties;
+        }
+        if (royaltiesSetToken.initialized && !royaltiesSetNFT.initialized) {
             return royaltiesSetToken.royalties;
         }
-        return resultRoyalties;
     }
 
     function setRoyaltiesCacheByTokenAndTokenId(
@@ -199,11 +239,10 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         emit RoyaltiesSetForToken(token, tokenId, royalties);
     }
 
-    function royaltiesFromContract(address token, uint256 tokenId)
-        internal
-        view
-        returns (LibPart.Part[] memory)
-    {
+    function royaltiesFromContract(
+        address token,
+        uint256 tokenId
+    ) internal view returns (LibPart.Part[] memory) {
         if (
             IERC165Upgradeable(token).supportsInterface(
                 type(RoyaltiesV1Luxy).interfaceId
@@ -245,10 +284,10 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         return new LibPart.Part[](0);
     }
 
-    function providerExtractor(address token, uint256 tokenId)
-        internal
-        returns (bool result, LibPart.Part[] memory royalties)
-    {
+    function providerExtractor(
+        address token,
+        uint256 tokenId
+    ) public returns (bool result, LibPart.Part[] memory royalties) {
         result = false;
         address providerAddress = royaltiesProviders[token];
         if (providerAddress != address(0x0)) {
@@ -258,7 +297,10 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             ) {
                 royalties = royaltiesByProvider;
                 result = true;
-            } catch {}
+            } catch {
+                royalties = new LibPart.Part[](0);
+                result = false;
+            }
         }
     }
 
