@@ -53,21 +53,24 @@ module.exports = {
       {
         version: "0.8.2",
         settings: {
+          metadata: {
+            bytecodeHash: 'ipfs', // 'none' or 'ipfs', when set to 'ipfs', the IPFS hash of the metadata file will be included in the bytecode
+          },
           optimizer: {
             enabled: true,
             runs: 1000
           },
         },
       },
-      {
-        version: "0.8.4",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
+      // {
+      //   version: "0.8.4",
+      //   settings: {
+      //     optimizer: {
+      //       enabled: true,
+      //       runs: 200,
+      //     },
+      //   },
+      // },
     ],
   },
   defaultNetwork: 'localhost',
@@ -93,11 +96,11 @@ module.exports = {
     mumbai: {
       url:
         process.env.MUMBAI_ENDPOINT,
-        accounts: [
-          process.env.ACCOUNT_DEPLOY_TESTNET,
-          process.env.PRIVATE_KEY_1,
-          process.env.PRIVATE_KEY_2
-        ],
+      accounts: [
+        process.env.ACCOUNT_DEPLOY_TESTNET,
+        process.env.PRIVATE_KEY_1,
+        process.env.PRIVATE_KEY_2
+      ],
       gasPrice: "auto",
       gasMultiplier: 10
     },
@@ -108,13 +111,13 @@ module.exports = {
     //   gasPrice: "auto",
     //   gasMultiplier: 10
     // },
-    // rollux: {
-    //   url:
-    //     process.env.ROLLUX_ENDPOINT,
-    //   accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
-    //   gasPrice: "auto",
-    //   gasMultiplier: 10
-    // },
+    rollux: {
+      url:
+        process.env.ROLLUX_MAINNET_ENDPOINT,
+      accounts: [process.env.ACCOUNT_DEPLOY_TESTNET],
+      gasPrice: "auto",
+      gasMultiplier: 10
+    },
     // rolluxMainnet: {
     //   url:
     //     process.env.ROLLUX_MAINNET_ENDPOINT,
@@ -167,6 +170,21 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_KEY,
+    apiKey: {
+      rollux: 'abc',
+    },
+    customChains: [
+      {
+        network: "rollux",
+        chainId: 570,
+        urls: {
+          apiURL: "https://explorer.rollux.com/api",
+          browserURL: "https://explorer.rollux.com"
+        }
+      }
+    ]
   },
+  // etherscan: {
+  //   apiKey: process.env.POLYGONSCAN_KEY,
+  // },
 };
