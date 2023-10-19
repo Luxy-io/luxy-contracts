@@ -9,9 +9,11 @@ contract RoyaltiesRegistryTest {
 
     event getRoyaltiesTest(LibPart.Part[] royalties);
 
-    function _getRoyalties(address royaltiesTest, address token, uint tokenId) external {
+    function _getRoyalties(address royaltiesTest, address token, uint tokenId) external returns (LibPart.Part[] memory) {
         IRoyaltiesProvider withRoyalties = IRoyaltiesProvider(royaltiesTest);
         LibPart.Part[] memory royalties = withRoyalties.getRoyalties(token, tokenId);
         emit getRoyaltiesTest(royalties);
+        return royalties;
+        
     }
 }

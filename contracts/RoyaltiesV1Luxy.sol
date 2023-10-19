@@ -54,6 +54,7 @@ abstract contract RoyaltiesV1Luxy is IERC2981 {
         address previousAccount,
         address newAccount
     );
+    
     mapping(uint256 => LibPart.Part[]) internal royalties;
 
     function getRoyalties(uint256 id)
