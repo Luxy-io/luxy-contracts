@@ -72,7 +72,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         __Ownable_init_unchained();
     }
 
-    function setProviderByToken(address token, address provider) public {
+    function setProviderByToken(address token, address provider) external {
         checkOwner(token);
         royaltiesProviders[token] = provider;
     }
@@ -157,9 +157,10 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
         RoyaltiesSet memory royaltiesSetToken = royaltiesByToken[token];
         uint totalRoyalties = royaltiesSetNFT.royalties.length +
             royaltiesSetToken.royalties.length;
+        LibPart.Part[] memory combinedRoyalties;
 
         if (royaltiesSetNFT.initialized && royaltiesSetToken.initialized) {
-            LibPart.Part[] memory combinedRoyalties = new LibPart.Part[](
+            combinedRoyalties = new LibPart.Part[](
                 totalRoyalties
             );
             for (uint256 i = 0; i < royaltiesSetToken.royalties.length; i++) {
@@ -174,7 +175,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
 
             return combinedRoyalties;
         } else if (
-            royaltiesSetNFT.initialized && !royaltiesSetToken.initialized
+            royaltiesSetNFT.initialized
         ) {
             return royaltiesSetNFT.royalties;
         }
@@ -191,7 +192,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
 
         setRoyaltiesCacheByTokenAndTokenId(token, tokenId, resultRoyalties);
 
-        LibPart.Part[] memory combinedRoyalties = new LibPart.Part[](
+        combinedRoyalties = new LibPart.Part[](
             totalRoyalties
         );
         if (resultRoyalties.length > 0) {
@@ -206,7 +207,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             }
             return combinedRoyalties;
         }
-        if (royaltiesSetToken.initialized && !royaltiesSetNFT.initialized) {
+        if (royaltiesSetToken.initialized) {
             return royaltiesSetToken.royalties;
         }
     }
@@ -297,10 +298,7 @@ contract RoyaltiesRegistry is IRoyaltiesProvider, OwnableUpgradeable {
             ) {
                 royalties = royaltiesByProvider;
                 result = true;
-            } catch {
-                royalties = new LibPart.Part[](0);
-                result = false;
-            }
+            } catch {}
         }
     }
 
