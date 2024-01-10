@@ -4,8 +4,12 @@ const main = async () => {
     // Config for platform
     // Get contract 
     const ERC721LuxyDrop = await ethers.getContractFactory('ERC721LuxyDrop');
+
+    const baseUri = "";
+    const artist = "0x1450356b2feca37325199379dD583C4A729D19A0"; //artist address
+    const launchpadAddress = "0x2E56fa532330f232D97d263b7d22deb3aB6354aD";
     // Deploy contract proxy
-    const ProxyLuxy721Drop = await upgrades.deployProxy(ERC721LuxyDrop, ["", "0x1450356b2feca37325199379dD583C4A729D19A0", "0x2E56fa532330f232D97d263b7d22deb3aB6354aD"], { initializer: '__ERC721LuxyDrop_init' });
+    const ProxyLuxy721Drop = await upgrades.deployProxy(ERC721LuxyDrop, [baseUri, artist, launchpadAddress], { initializer: '__ERC721LuxyDrop_init' });
     console.log('Deploying contract');
     // Wait for campaign  deploy success
     await ProxyLuxy721Drop.deployed();
