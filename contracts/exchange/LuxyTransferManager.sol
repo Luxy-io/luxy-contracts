@@ -172,14 +172,12 @@ abstract contract LuxyTransferManager is OwnableUpgradeable, ITransferManager {
         }
     }
 
-    function setTiers(LibTier.Tier[] memory _tiers) external onlyOwner {
+function setTiers(LibTier.Tier[] memory _tiers) external onlyOwner {
         require(
             tierToken != address(0),
             "You must first set address of the tierToken at setTierToken"
         );
-        for (uint256 i = 0; i < tiers.length; i++) {
-            delete tiers[i];
-        }
+        delete tiers;
         for (uint256 i = 0; i < _tiers.length; i++) {
             require(
                 _tiers[i].value >= 0,
